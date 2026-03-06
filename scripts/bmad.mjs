@@ -51,22 +51,23 @@ class Bmad {
 
   // ── Delay/Wait Handler ────────────────────────────────────────────────────────
 
-  async delay(ms = 1000, logLevel = 'info') {
+  async delay(seconds = 1, logLevel = 'info') {
+    const ms = seconds * 1000;
     if (logLevel === 'info' || logLevel === 'debug') {
-      console.log(`[bmad:delay] ⏳ Waiting ${ms}ms...`);
+      console.log(`[bmad:delay] ⏳ Waiting ${seconds}s...`);
     }
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   async wait(args) {
-    let ms = 1000;
+    let seconds = 1;
     let logLevel = 'info';
     let config = null;
 
     // Parse arguments
     for (let i = 0; i < args.length; i++) {
-      if (args[i] === '--ms' && args[i + 1]) {
-        ms = parseInt(args[i + 1], 10);
+      if (args[i] === '--seconds' && args[i + 1]) {
+        seconds = parseInt(args[i + 1], 10);
         i++;
       } else if (args[i] === '--config') {
         config = true;
@@ -75,17 +76,17 @@ class Bmad {
 BMAD Delay Handler
 
 Usage:
-  node bmad.mjs wait [--ms <milliseconds>]
+  node bmad.mjs wait [--seconds <seconds>]
   node bmad.mjs wait --config
   node bmad.mjs wait --help
 
 Options:
-  --ms <ms>      Wait for specified milliseconds (default: 1000)
+  --seconds <s>  Wait for specified seconds (default: 1)
   --config       Show delay configuration
   --help, -h     Show this help message
 
 Examples:
-  node bmad.mjs wait --ms 2000
+  node bmad.mjs wait --seconds 2
   node bmad.mjs wait --config
         `);
         return;
@@ -106,7 +107,7 @@ Examples:
       }
     }
 
-    await this.delay(ms, logLevel);
+    await this.delay(seconds, logLevel);
   }
 
   uiBlueprint() {
