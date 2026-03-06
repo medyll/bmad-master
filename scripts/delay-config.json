@@ -1,0 +1,8 @@
+{
+  "total_duration_seconds": 60,
+  "steps": [
+    "Pause: finalizing current task",
+    "Pause: preparing next role",
+    "Resume: continuing workflow"
+  ]
+}
