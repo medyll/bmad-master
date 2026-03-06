@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * bmad.mjs — BMAD unified script runner
+ * bmad.mjs — BMAD unified script runner + delay handler
  *
  * Usage:
  *   node bmad.mjs <command> [args]
@@ -10,6 +10,8 @@
  *   snapshot [bmad-dir]    Snapshot bmad/status.yaml to artifacts/history/
  *   connector [bmad-dir]   Generate bmad/artifacts/connector.yml
  *   ui [bmad-dir]          Describe BMAD UI architecture via simple HTML descriptors
+ *   wait [--ms <ms>]       Wait/delay handler for inter-task latency
+ *   delay [--ms <ms>]      Alias for wait command
  *   ensure                 Register bmad:update-dashboard in package.json scripts
  *   install                Install required dependencies (js-yaml)
  */
@@ -45,6 +47,66 @@ class Bmad {
       `${d.getFullYear()}-${this.pad(d.getMonth() + 1)}-${this.pad(d.getDate())}` +
       `-${this.pad(d.getHours())}${this.pad(d.getMinutes())}${this.pad(d.getSeconds())}`
     );
+  }
+
+  // ── Delay/Wait Handler ────────────────────────────────────────────────────────
+
+  async delay(ms = 1000, logLevel = 'info') {
+    if (logLevel === 'info' || logLevel === 'debug') {
+      console.log(`[bmad:delay] ⏳ Waiting ${ms}ms...`);
+    }
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async wait(args) {
+    let ms = 1000;
+    let logLevel = 'info';
+    let config = null;
+
+    // Parse arguments
+    for (let i = 0; i < args.length; i++) {
+      if (args[i] === '--ms' && args[i + 1]) {
+        ms = parseInt(args[i + 1], 10);
+        i++;
+      } else if (args[i] === '--config') {
+        config = true;
+      } else if (args[i] === '--help' || args[i] === '-h') {
+        console.log(`
+BMAD Delay Handler
+
+Usage:
+  node bmad.mjs wait [--ms <milliseconds>]
+  node bmad.mjs wait --config
+  node bmad.mjs wait --help
+
+Options:
+  --ms <ms>      Wait for specified milliseconds (default: 1000)
+  --config       Show delay configuration
+  --help, -h     Show this help message
+
+Examples:
+  node bmad.mjs wait --ms 2000
+  node bmad.mjs wait --config
+        `);
+        return;
+      }
+    }
+
+    if (config) {
+      try {
+        const scriptDir = path.dirname(import.meta.url.replace('file:///', ''));
+        const configPath = path.join(scriptDir, 'delay-config.json');
+        const configData = await fs.readFile(configPath, 'utf8');
+        const cfg = JSON.parse(configData);
+        console.log('\n📋 BMAD Delay Configuration\n');
+        console.log(JSON.stringify(cfg, null, 2));
+        return;
+      } catch (err) {
+        console.warn(`⚠️  Could not load delay-config.json:`, err.message);
+      }
+    }
+
+    await this.delay(ms, logLevel);
   }
 
   uiBlueprint() {
@@ -516,6 +578,8 @@ const commands = {
   snapshot:  () => bmad.snapshot(args[0]),
   dashboard: () => bmad.dashboard(),
   connector: () => bmad.connector(args.find(a => !a.startsWith('--'))),
+  wait:      () => bmad.wait(args),
+  delay:     () => bmad.wait(args),  // Alias
 };
 
 if (!cmd || !commands[cmd]) {

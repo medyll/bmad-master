@@ -1,11 +1,24 @@
 ---
 name: bmad-master
-description:
-  BMAD Method multi-role AI orchestrator. Proactive & framing-oriented. Manages software projects, plans products, PRDs, architecture, sprint planning, stories, testing and documentation. Adaptive to all profiles (Beginner, Senior, ADHD). Triggers on commands like init, analyze, status, plan, sprint, dev, readme, test, audit, doc, explore, market, fix — or any dev related task, or any BMAD role mention (analyst, PM, architect, scrum master, developer, tester, doc agent, brainstorm).
-argument-hint: "init, analyze, sync, status, dashboard, connector, connector --rebuild, next, next --auto, plan prd, plan spec, plan arch, plan arch --stack, plan roadmap, sprint, sprint story, sprint backlog, dev story <id>, dev review, dev refactor, readme, readme --user, readme --api, readme --dev, readme --full, test plan, test unit, test e2e, test qa, test bugs, audit, audit --full, audit --code, audit --arch, audit --security, audit --perf, audit --doc, audit --deps, doc, doc --coauthor, doc report, doc spec, explore, explore --ideate, explore --directions, research, research brief, market, market campaign, market launch, market position, market growth, market message, layout, layout --mockup, add, fix, fix --syntax, fix --upgrade, fix --design"
+description: |-
+  [init] (Initialize or analyze a project — creates bmad/ structure, config, status.) \rn
+  [status] (Show project dashboard, recommend next move.)
+  [next] (Execute the next logical step. Use --auto for full autonomous mode.)
+  [plan] (Generate PRD, tech-spec, architecture, or roadmap. e.g. plan prd, plan arch.)
+  [sprint] (Create sprints, stories, and manage the backlog.)
+  [dev] (Implement stories, review code, refactor. e.g. dev story S1-03.)
+  [test] (Run test plans, unit/e2e tests, QA, bug tracking.)
+  [audit] (Analyze codebase — code, arch, security, perf, deps, docs.)
+  [doc] (Generate documentation, specs, or co-author docs.)
+  [readme] (Generate README variants — user, api, dev, or full.)
+  [explore] (Brainstorm ideas, explore directions, research topics.)
+  [market] (Marketing: campaigns, launch plans, positioning, messaging.)
+  [fix] (Fix issues — syntax errors, dependency upgrades, design problems.)
+  [layout] (Visualize interface structure and component roles.)
+argument-hint: "init, analyze, sync, status, dashboard, connector, connector --rebuild, next, next --auto, plan prd, plan spec, plan arch, plan arch --stack, plan roadmap, sprint, sprint story, sprint backlog, dev story <id>, dev review, dev refactor, readme, readme --user, readme --api, readme --dev, readme --full, test plan, test unit, test e2e, test qa, test bugs, audit, audit --full, audit --code, audit --arch, audit --security, audit --perf, audit --doc, audit --deps, doc, doc --coauthor, doc report, doc spec, explore, explore --ideate, explore --directions, research, research brief, market, market campaign, market launch, market position, market growth, market message, layout, layout --mockup, add, fix, fix --syntax, fix --upgrade, fix --design, --delay <ms>"
 compatibility:
   - mcp_v2
-user-invokable: true
+user-invocable: true
 disable-model-invocation: false
 license: MIT
 metadata:
@@ -19,10 +32,10 @@ metadata:
 ## Syntax
 
 ```
-bmad <verb> [noun] [--flag]
+bmad <verb> [noun] [--flag] [--delay <ms>]
 ```
 
-All commands follow this pattern. Examples: `bmad init`, `bmad plan prd`, `bmad audit --code`, `bmad dev story ST-104`.
+All commands follow this pattern. Examples: `bmad init`, `bmad plan prd`, `bmad audit --code`, `bmad dev story ST-104`, `bmad next --auto --delay 2000`.
 
 ---
 
@@ -44,6 +57,7 @@ All commands follow this pattern. Examples: `bmad init`, `bmad plan prd`, `bmad 
 | **layout** | `layout [--mockup]` | Interface |
 | **add** | `add` *(knowledge ingestion)* | Orchestrator |
 | **fix** | `fix [--syntax\|--upgrade\|--design]` | No-Entropy |
+| **Global flags** | `--delay <ms>` | Inter-task latency (all commands) |
 
 ## Role → File Routing
 
@@ -57,10 +71,9 @@ All commands follow this pattern. Examples: `bmad init`, `bmad plan prd`, `bmad 
 | Developer | `references/developer.md` |
 | README | `references/developer.md` |
 | Documentation | `references/documentation.md` |
-| Interface | `references/sive-layout.html` |
 | Tester | `references/tester.md` |
 | Marketing | `references/marketing.md` |
-| Delay | `scripts/wait.mjs` |
+| Delay Handler | `scripts/bmad.mjs wait` |
 | No-Entropy | `references/no-entropy-principle.md` |
 
 ---
@@ -328,7 +341,7 @@ All BMAD roles MUST follow these rules after any artifact write:
 3. If any artifact or directory was created/deleted → regenerate `bmad/artifacts/connector.yml`.
 4. Monorepo: update `master-dashboard.json` at repo root when root status changes.
 5. All artifacts MUST be physically written to disk. Never display file contents in chat as a substitute for writing.
-6. Post-Action Delay: After completing a major task or before switching roles, invoke `node ./scripts/wait.mjs` to enforce an inter-task latency (configurable via `scripts/delay-config.json`). This helps simulate processing time and avoid automated rate-limiting.
+6. Post-Action Delay: After completing a major task or before switching roles, invoke `node ./scripts/bmad.mjs wait --ms <ms>` to enforce an inter-task latency. This helps simulate processing time and avoid automated rate-limiting.
 
 Full rule set → `references/orchestrator-advanced.md`. 
 
