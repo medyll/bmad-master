@@ -4,11 +4,12 @@ Objectif
 - Gérer des pauses temporelles entre tâches ou entre changements de rôle pour réguler le rythme du workflow.
 
 Comportement
-- Exécuter le script `node ./scripts/wait.mjs` après un bloc d'actions majeur ou avant un changement de rôle.
+- Exécuter `node ./scripts/bmad.mjs wait` après un bloc d'actions majeur ou avant un changement de rôle.
+- Support du flag `--ms <ms>` pour des délais personnalisés.
 - La durée et les étapes sont configurables dans `scripts/delay-config.json`.
 
 Utilisation
-- Appeler depuis l'orchestrateur: `node ./scripts/wait.mjs` ou via l'invocation intégrée `bmad` selon le workflow.
+- Appeler depuis l'orchestrateur: `node ./scripts/bmad.mjs wait [--ms <ms>]` ou via l'alias `node ./scripts/bmad.mjs delay`.
 - Le script retourne 0 en cas de succès, 1 en cas d'erreur — le rôle appelant doit réagir en conséquence.
 
 Notes
