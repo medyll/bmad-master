@@ -14,6 +14,7 @@
  *   delay [--ms <ms>]      Alias for wait command
  *   ensure                 Register bmad:update-dashboard in package.json scripts
  *   install                Install required dependencies (js-yaml)
+ *   repair                 Run installer and verify that all required components are present
  */
 
 import fs from 'fs/promises';
@@ -328,6 +329,40 @@ Examples:
   }
 
   /**
+   * repair — ensure the script environment is healthy
+   *
+   * runs the installer and then attempts to load the yaml library,
+   * exiting with a nonzero status if anything is still missing.
+   */
+  async repair() {
+    this.log('repair', 'running environment repair');
+
+    // warn if there is no package.json in cwd, since npm install will behave
+    // differently in that situation. The user is expected to invoke this from
+    // their project root where BMAD is used.
+    try {
+      const pkgPath = path.join(this.cwd, 'package.json');
+      await fs.access(pkgPath);
+    } catch {
+      this.err(
+        'repair',
+        'no package.json found in current directory – run this from your project root'
+      );
+    }
+
+    await this.install();
+    // attempt to require yaml just to validate
+    try {
+      await this.loadYaml();
+      this.log('repair', 'yaml dependency is present');
+    } catch (err) {
+      this.err('repair', 'yaml check failed');
+      process.exit(1);
+    }
+    this.log('repair', 'repair complete');
+  }
+
+  /**
    * ensure — register bmad:update-dashboard script in package.json
    */
   async ensure() {
@@ -575,6 +610,7 @@ const bmad = new Bmad();
 
 const commands = {
   install:   () => bmad.install(),
+  repair:    () => bmad.repair(),
   ensure:    () => bmad.ensure(),
   snapshot:  () => bmad.snapshot(args[0]),
   dashboard: () => bmad.dashboard(),

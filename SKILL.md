@@ -15,7 +15,7 @@ description: |-
   [market] (Marketing: campaigns, launch plans, positioning, messaging.)
   [fix] (Fix issues — syntax errors, dependency upgrades, design problems.)
   [layout] (Visualize interface structure and component roles.)
-argument-hint: "init, analyze, sync, status, dashboard, connector, connector --rebuild, next, next --auto, plan prd, plan spec, plan arch, plan arch --stack, plan roadmap, sprint, sprint story, sprint backlog, dev story <id>, dev review, dev refactor, readme, readme --user, readme --api, readme --dev, readme --full, test plan, test unit, test e2e, test qa, test bugs, audit, audit --full, audit --code, audit --arch, audit --security, audit --perf, audit --doc, audit --deps, doc, doc --coauthor, doc report, doc spec, explore, explore --ideate, explore --directions, research, research brief, market, market campaign, market launch, market position, market growth, market message, layout, layout --mockup, add, fix, fix --syntax, fix --upgrade, fix --design, --delay <seconds>"
+argument-hint: "init, analyze, sync, status, dashboard, connector, connector --rebuild, next, next --auto, repair, plan prd, plan spec, plan arch --stack, plan arch --stack, plan roadmap, sprint, sprint story, sprint backlog, dev story <id>, dev review, dev refactor, readme, readme --user, readme --api, readme --dev, readme --full, test plan, test unit, test e2e, test qa, test bugs, audit, audit --full, audit --code, audit --arch, audit --security, audit --perf, audit --doc, audit --deps, doc, doc --coauthor, doc report, doc spec, explore, explore --ideate, explore --directions, research, research brief, market, market campaign, market launch, market position, market growth, market message, layout, layout --mockup, add, fix, fix --syntax, fix --upgrade, fix --design, --delay <seconds>"
 compatibility:
   - mcp_v2
 user-invocable: true
@@ -45,6 +45,7 @@ All commands follow this pattern. Examples: `bmad init`, `bmad plan prd`, `bmad 
 |------|----------|------|
 | **init** | `init` · `analyze` · `sync` | Orchestrator |
 | **status** | `status` · `dashboard` · `connector [--rebuild]` · `next` · `next --auto` | Orchestrator |
+| **repair** | `repair` | Maintenance (installs dependencies, verifies environment – run from your project root) |
 | **plan** | `plan prd` · `plan spec` · `plan arch [--stack]` · `plan roadmap` | PM / Architect |
 | **sprint** | `sprint` · `sprint story` · `sprint backlog` | Scrum Master |
 | **dev** | `dev story <id>` · `dev review` · `dev refactor` | Developer |

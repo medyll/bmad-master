@@ -24,6 +24,7 @@ A multi-role AI orchestrator for structured software project management based on
 - `next` — proactively suggest the most logical next step
 - `update-dashboard` — regenerate `dashboard.md` (and `master-dashboard.json` in monorepos)
 - `add-knowledge` — ingest new documentation and apply it to role reference files
+- `repair` — run the internal installer and verify the script environment (useful after skill updates)
 
 ## Compatibility
 
