@@ -316,13 +316,23 @@ Examples:
     this.log('install', 'installing dependencies');
     for (const pkg of ['js-yaml']) {
       this.log('install', `installing ${pkg}...`);
-      const res = spawnSync('npm', ['install', pkg, '--no-audit', '--no-fund'], {
+      const scriptDir = path.dirname(import.meta.url.replace('file:///', ''));
+      // Prefer installing into the skill's scripts directory so require() resolves from here.
+      let res = spawnSync('npm', ['install', pkg, '--no-audit', '--no-fund'], {
         stdio: 'inherit',
-        cwd: this.cwd,
+        cwd: scriptDir,
       });
       if (res.status !== 0) {
-        this.err('install', `failed to install ${pkg}`);
-        process.exit(res.status || 1);
+        this.err('install', `failed to install ${pkg} into ${scriptDir}; attempting project root fallback`);
+        // Fallback: try installing into the caller's cwd (project root)
+        res = spawnSync('npm', ['install', pkg, '--no-audit', '--no-fund'], {
+          stdio: 'inherit',
+          cwd: this.cwd,
+        });
+        if (res.status !== 0) {
+          this.err('install', `failed to install ${pkg} in both scriptDir and project root`);
+          process.exit(res.status || 1);
+        }
       }
     }
     this.log('install', 'done');
@@ -350,15 +360,24 @@ Examples:
       );
     }
 
-    await this.install();
-    // attempt to require yaml just to validate
+    // If js-yaml is already resolvable from the script context, skip install.
     try {
-      await this.loadYaml();
-      this.log('repair', 'yaml dependency is present');
-    } catch (err) {
-      this.err('repair', 'yaml check failed');
-      process.exit(1);
+      const require = createRequire(import.meta.url);
+      require('js-yaml');
+      this.log('repair', 'yaml dependency is present (skipping install)');
+    } catch {
+      // Not present where the script resolves modules — attempt install.
+      await this.install();
+      // attempt to require yaml just to validate
+      try {
+        await this.loadYaml();
+        this.log('repair', 'yaml dependency is present');
+      } catch (err) {
+        this.err('repair', 'yaml check failed');
+        process.exit(1);
+      }
     }
+
     this.log('repair', 'repair complete');
   }
 
