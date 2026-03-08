@@ -23,7 +23,7 @@ integration:
 
 outputs:
   - Test plans (markdown) placed under `bmad/artifacts/tests/` with links to failing test cases.
-  - Small test snippets or Playwright files as patch suggestions (apply only after approval).
+  - Small test snippets or Playwright files as patch suggestions (apply only after approval; skip approval if `--auto` is active).
 
 notes:
   - Keep test artifacts minimal and focused: aim for high signal-to-noise for CI time.

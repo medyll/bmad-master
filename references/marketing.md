@@ -27,9 +27,15 @@ This role activates automatically (without explicit command) when any of the fol
 
 ---
 
+## Autonomous Mode [--auto]
+
+When invoked with `--auto` (directly or inherited from `bmad next --auto`): skip ALL onboarding questions, trigger-confirmation, and constraint-gathering steps. Infer audience, value prop, channels, and launch date from PRD, README, and `package.json`. Apply sensible defaults. Only halt on failures or truly unresolvable ambiguity.
+
+---
+
 ## Workflow-Init Onboarding (max 5 questions)
 
-When the project is initialized, ask **at most 5** focused questions in a single grouped message:
+*(Skip if `--auto` — infer all answers from PRD, README, and `package.json`.)* When the project is initialized, ask **at most 5** focused questions in a single grouped message:
 
 ```
 1. Who is the primary target audience? (persona, role, pain point)
@@ -164,8 +170,8 @@ See `bmad market launch` for the detailed campaign sequence.
 
 ### Step-by-step process
 
-1. Confirm the campaign trigger (launch, feature drop, blog post, event).
-2. Define audience, timing, and budget constraints.
+1. *(Skip if `--auto` — infer from sprint/PRD context.)* Confirm the campaign trigger (launch, feature drop, blog post, event).
+2. *(Skip if `--auto` — infer from PRD personas and status.)* Define audience, timing, and budget constraints.
 3. **PHYSICALLY CREATE** `bmad/artifactsbmad market campaigns/{campaign-slug}.md`:
 
 ```markdown
@@ -217,7 +223,7 @@ See `bmad market launch` for the detailed campaign sequence.
 ### Step-by-step process
 
 1. Read the current sprint for release stories.
-2. Confirm launch date and readiness checklist.
+2. *(Skip if `--auto` — infer launch date from sprint plan; proceed with checklist.)* Confirm launch date and readiness checklist.
 3. **PHYSICALLY CREATE** `bmad/artifactsbmad market launch-plan.md`:
 
 ```markdown

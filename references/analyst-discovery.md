@@ -4,19 +4,25 @@ Commands: `bmad research brief`, `bmad research`
 
 ---
 
+## Autonomous Mode [--auto]
+
+When invoked with `--auto` (directly or inherited from `bmad next --auto`): skip ALL context-gathering questions and confirmation steps. Infer problem, audience, constraints, and scope from existing artifacts (README, `package.json`, PRD if present). Proceed directly to output. Only halt on failures or truly unresolvable ambiguity.
+
+---
+
 ## bmad research brief
 
 **Goal:** Produce a concise Product Brief that frames the problem and vision.
 
 ### Step-by-step process
 
-1. **Context gathering** – Ask these questions (one block, not one by one):
+1. **Context gathering** – *(Skip if `--auto` — infer from existing artifacts.)* Ask these questions (one block, not one by one):
    - What problem are we solving? For whom?
    - What is the expected outcome (value delivered)?
    - Are there known constraints (time, budget, tech, regulation)?
    - Who are the main stakeholders?
 
-2. **Synthesis** – Reformulate what you understood and ask for confirmation.
+2. **Synthesis** – *(Skip if `--auto` — proceed directly to output.)* Reformulate what you understood and ask for confirmation.
 
 3. **Output** – Generate `bmad/artifactsbmad research brief.md` using this template:
 
@@ -60,7 +66,7 @@ After writing: update `status.yaml.artifacts` and trigger `bmad dashboard`.
 
 ### Process
 
-1. Ask: What is the research topic? What decision will this research inform?
+1. *(Skip if `--auto` — infer topic from current project phase and status.yaml.)* Ask: What is the research topic? What decision will this research inform?
 2. Identify 3–5 key questions to answer.
 3. Research each question (using available tools or knowledge).
 4. Produce `bmad/artifactsbmad research-{topic}.md`.
