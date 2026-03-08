@@ -74,21 +74,21 @@ class Bmad {
         config = true;
       } else if (args[i] === '--help' || args[i] === '-h') {
         console.log(`
-BMAD Delay Handler
+            BMAD Delay Handler
 
-Usage:
-  node bmad.mjs wait [--seconds <seconds>]
-  node bmad.mjs wait --config
-  node bmad.mjs wait --help
+            Usage:
+              node bmad.mjs wait [--seconds <seconds>]
+              node bmad.mjs wait --config
+              node bmad.mjs wait --help
 
-Options:
-  --seconds <s>  Wait for specified seconds (default: 1)
-  --config       Show delay configuration
-  --help, -h     Show this help message
+            Options:
+              --seconds <s>  Wait for specified seconds (default: 1)
+              --config       Show delay configuration
+              --help, -h     Show this help message
 
-Examples:
-  node bmad.mjs wait --seconds 2
-  node bmad.mjs wait --config
+            Examples:
+              node bmad.mjs wait --seconds 2
+              node bmad.mjs wait --config
         `);
         return;
       }
@@ -624,18 +624,25 @@ Examples:
 
 // ── CLI entry point ─────────────────────────────────────────────────────────
 
-const [, , cmd, ...args] = process.argv;
+// Robust CLI parsing — accept global flags anywhere (e.g.,  --delay <s>)
+// and pass an options object to command handlers.
+const raw = process.argv.slice(2);
+let cmd;
+const args = [];
+const opts = {  delay: null };
+
+
 const bmad = new Bmad();
 
 const commands = {
-  install:   () => bmad.install(),
-  repair:    () => bmad.repair(),
-  ensure:    () => bmad.ensure(),
-  snapshot:  () => bmad.snapshot(args[0]),
-  dashboard: () => bmad.dashboard(),
-  connector: () => bmad.connector(args.find(a => !a.startsWith('--'))),
-  wait:      () => bmad.wait(args),
-  delay:     () => bmad.wait(args),  // Alias
+  install:   (a,o) => bmad.install(a,o),
+  repair:    (a,o) => bmad.repair(a,o),
+  ensure:    (a,o) => bmad.ensure(a,o),
+  snapshot:  (a,o) => bmad.snapshot(a[0]),
+  dashboard: (a,o) => bmad.dashboard(a,o),
+  connector: (a,o) => bmad.connector(a.find(x => !x.startsWith('--'))),
+  wait:      (a,o) => bmad.wait(a),
+  delay:     (a,o) => bmad.wait(a),  // Alias
 };
 
 if (!cmd || !commands[cmd]) {
@@ -643,4 +650,4 @@ if (!cmd || !commands[cmd]) {
   process.exit(1);
 }
 
-commands[cmd]().catch(e => { console.error(e); process.exit(1); });
+commands[cmd](args, opts).catch(e => { console.error(e); process.exit(1); });

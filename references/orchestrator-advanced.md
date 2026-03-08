@@ -91,5 +91,5 @@ Discovery: recursively scan `*/bmad/status.yaml` to detect monorepo layout autom
 
 ## 🛠️ Global Actions
 - [🔄 Full Rescan](command:bmad.run?["update-dashboard"])
-- [➕ New Package](command:bmad.run?["workflow-init"])
+- [➕ New Package](command:bmad.run?["init"])
 ```

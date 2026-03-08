@@ -20,6 +20,32 @@ and to review code for quality, correctness, and consistency.
 
 Check for the story file in `bmad/artifacts/stories/`. If missing, ask for the story ID or content.
 
+### Autonomous mode [--auto]
+-**`--auto`** — enter **full autonomous mode** for the current category (writing stories, sprints, docs, etc.):
+- Identify the active phase/category and **keep working within it** (e.g., if you just created a story, continue implementing every pending story before moving on).
+- Do not ask question about what to do, if you have a doubt make the more logical choice based on project state and best practices.
+- Execute **every pending task** in that category sequentially without pausing, asking, or waiting.
+- Apply sensible defaults for all decisions that are not destructive or irreversible.
+- Only halt if: (a) a test fails, (b) a file write fails, (c) a decision requires information that cannot be inferred.
+- After each completed task, emit one status line: `[role...] ✅ done: <task> → next: <task>`.
+- When the category is fully exhausted: emit a summary table and trigger `bmad dashboard`.
+
+**Autonomous decision rules** (applied only under `--auto`):
+
+| Decision type | Default behavior |
+|---------------|-----------------|
+| Missing PRD context | Use existing artifacts; flag gap in summary |
+| Story estimate unknown | Default to 3 points |
+| Ambiguous scope | Take the narrower interpretation; note it |
+| Test framework unknown | Infer from `package.json` devDependencies |
+| Commit message scope | Infer from changed file paths |
+| Architecture choice between equals | Choose the option with fewer dependencies |
+
+**`--auto` never:**
+- Deletes files or drops database schema.
+- Commits with failing tests.
+- Overwrites an artifact marked `locked: true` in `status.yaml`.
+
 ### Step-by-step process
 
 1. **Read the story** – Parse:
@@ -27,7 +53,8 @@ Check for the story file in `bmad/artifacts/stories/`. If missing, ask for the s
    - Technical notes
    - Dependencies and out-of-scope items
 
-2. **Clarify before coding** – Ask if anything is ambiguous:
+2. **Clarify before coding** – *(Skip entirely if `--auto` is active — apply the autonomous decision rules table instead and proceed immediately.)*
+   Ask if anything is ambiguous:
    - Which existing modules are affected?
    - Any preferred patterns or conventions in the codebase?
    - Any auth / permission constraints?
