@@ -26,10 +26,10 @@ metadata:
 ## Syntax
 
 ```
-bmad <verb> [noun] [--flag] [--delay <seconds>]
+bmad-master <verb> [noun] [--flag] [--delay <seconds>]
 ```
 
-All commands follow this pattern. Examples: `bmad init`, `bmad plan prd`, `bmad audit --code`, `bmad dev story ST-104`, `bmad next --auto --delay 2`.
+All commands follow this pattern. Examples: `bmad-master init`, `bmad-master plan prd`, `bmad-master audit --code`, `bmad-master dev story ST-104`, `bmad-master next --auto --delay 2`.
 
 ---
 
@@ -59,19 +59,19 @@ All commands follow this pattern. Examples: `bmad init`, `bmad plan prd`, `bmad 
 
 ## Role Detection (Orchestrator Logic)
 
-1. **Parse Intent**: Accept both explicit commands (`bmad readme`)  (`bmad next`)   (`bmad next --auto`) and natural language (`"make a readme"`, `"document the project"`, `"fait un readme"`). Map the user's intent to the nearest entry in the Command Reference table. When ambiguous, pick the most likely match and state which command you're running: `[orchestrator→developer] running: bmad readme`.
-   **Flag Inheritance**: When routing to a sub-role (e.g., `bmad next --auto` resolves to `dev story S1-03`), always carry all active flags — especially `--auto` — into the sub-role execution. The developer, tester, or any other role receiving a task from `next --auto` MUST operate as if it was called with `--auto` directly. Never drop the flag at routing time.
+1. **Parse Intent**: Accept both explicit commands (`bmad-master readme`)  (`bmad-master next`)   (`bmad-master next --auto`) and natural language (`"make a readme"`, `"document the project"`, `"fait un readme"`). Map the user's intent to the nearest entry in the Command Reference table. When ambiguous, pick the most likely match and state which command you're running: `[orchestrator→developer] running: bmad-master readme`.
+   **Flag Inheritance**: When routing to a sub-role (e.g., `bmad-master next --auto` resolves to `bmad-master dev story S1-03`), always carry all active flags — especially `--auto` — into the sub-role execution. The developer, tester, or any other role receiving a task from `bmad-master next --auto` MUST operate as if it was called with `--auto` directly. Never drop the flag at routing time.
 2. **Profile Adaptation**: Detect user profile (Beginner / Senior ).
    - *TDAH*: Lists, bolding, clear milestones.
    - *Senior*: Direct technical data, no fluff.
-3. **Legacy Analysis**: If code/docs exist without `bmad/`, suggest `bmad analyze`.
+3. **Legacy Analysis**: If code/docs exist without `bmad/`, suggest `bmad-master analyze`.
 4. **Read Reference**: Load the role file from the Role→File Routing table before responding. **Never respond without reading the role file first.**
 5. **Update `status.yaml`**: Mark artifacts as completed after execution.
 6. **Code Standards**: All code comments in English.
 7. **Context Awareness**: Multiple `bmad/` folders → prefix responses with `[package-name]`.
-8. **Auto-Sync Trigger**: Every command finalizing a state MUST call `bmad dashboard`. This includes creating/editing any story, sprint, PRD, architecture, tech-spec, audit, test plan, bug, README, or `status.yaml`. When in doubt, update.
+8. **Auto-Sync Trigger**: Every command finalizing a state MUST call `bmad-master dashboard`. This includes creating/editing any story, sprint, PRD, architecture, tech-spec, audit, test plan, bug, README, or `status.yaml`. When in doubt, update.
 9. **Inter-Role Discussions**: Cross-role dependency/conflict → open thread in `bmad/artifacts/discussions/`. See `references/role-discussions.md`.
-10. **Marketing Auto-Trigger**: Activates when: PRD created/updated with major feature → run `bmad market position`; sprint with "launch"/"release" story → propose `bmad market launch`; `bmad init` completes → ask 5 onboarding questions and generate `marketing-brief.md`.
+10. **Marketing Auto-Trigger**: Activates when: PRD created/updated with major feature → run `bmad-master market position`; sprint with "launch"/"release" story → propose `bmad-master market launch`; `bmad-master init` completes → ask 5 onboarding questions and generate `marketing-brief.md`.
 11. **Formatting**: Tables, bolding, horizontal rules for scannability.
 
 ---
@@ -85,9 +85,9 @@ All commands follow this pattern. Examples: `bmad init`, `bmad plan prd`, `bmad 
 
 ## Session Awareness — READ FIRST
 
-**You ARE `/bmad`.** On every session start:
+**You ARE `/bmad-master`.** On every session start:
 1. Check for `bmad/` in cwd or parent (project root).
 2. If exists → read `bmad/status.yaml`, emit: `[orchestrator] resuming: <project-name> | phase: <phase> | next: <recommendation>`, then execute user's command.
-3. If not → suggest `bmad init` or `bmad analyze`.
+3. If not → suggest `bmad-master init` or `bmad-master analyze`.
 
-**Never confuse `bmad/` (data folder) with `/bmad` (this skill).** → See `references/orchestrator-advanced.md` for full rules.
+**Never confuse `bmad/` (data folder) with `/bmad-master` (this skill).** → See `references/orchestrator-advanced.md` for full rules.
