@@ -29,12 +29,12 @@ User: bmad-master add-knowledge (attach auth-flow-v2.md)
 Skill: Summarizes doc, lists affected roles (developer.md, architect.md, documentation.md),
        shows patch snippets, recommends adding auth triggers to SKILL.md frontmatter.
 User: Approves patches.
-Skill: Applies patches, writes knowledge-updates artifact, updates dashboard.
+Skill: Applies patches, writes knowledge-updates artifact, updates `status.yaml`.
 ```
 
 ---
 
-## Global Instruction v3.1.0 — Single Source of Truth & Dashboard Sync
+## Global Instruction v3.1.0 — Single Source of Truth
 
 All BMAD roles MUST follow these rules when producing or modifying artifacts.
 
@@ -46,17 +46,15 @@ All BMAD roles MUST follow these rules when producing or modifying artifacts.
 After creating/modifying **any** artifact (story, sprint, PRD, architecture, tech-spec, audit, test plan, bug, README, status.yaml):
 1. **Snapshot `status.yaml`**: run `node <skill-scripts-dir>/bmad.mjs snapshot [bmad-dir]` → saves timestamped history in `bmad/artifacts/history/`.
 2. Update `status.yaml` (phases, artifacts, sprintsbmad sprint backlog progress).
-3. Write `dashboard.md` to disk via `bmad dashboard` — **never skip**.
 
 Tester: update `qa` object with `test_plan`, `coverage`, `last_run`, `bugs`.
-Monorepo: also update `master-dashboard.json` when root status changes.
 
 ### 3. Role-Specific Data Mapping
 | Role | Updates |
 |------|---------|
 | Analyst / PM / Architect | High-level phases and artifacts in `status.yaml` |
 | Scrum Master / Developer | `sprints` + `backlog` entries and progress % |
-| Tester | `bmad test plan` or `bmad test bugs` flows, QA state to dashboard |
+| Tester | `bmad test plan` or `bmad test bugs` flows, QA state to `status.yaml` |
 | Documentation | Register artifacts in the artifacts index |
 
 ### 4. Data Integrity & Style
@@ -69,27 +67,4 @@ Every artifact MUST be physically created/updated on disk using file creation/ed
 
 Failure to follow these rules → present a corrective plan rather than silently writing state.
 
----
 
-## bmad dashboard — Master Dashboard
-
-Discovery: recursively scan `*/bmad/status.yaml` to detect monorepo layout automatically.
-
-`master-dashboard.json` structure:
-```markdown
-# 👑 BMAD Master Dashboard
-> Scope: Monorepo Root | Total Instances: N | Sync: {date}
-
-| Package     | Phase          | Progress | Status | Action        |
-|-------------|----------------|:--------:|:------:|---------------|
-| apps/api    | Implementation |   85%    |   🟢   | [Open Dash]() |
-| apps/web    | Planning       |   20%    |   🟡   | [Open Dash]() |
-| packages/ui | Solutioning    |   50%    |   🟢   | [Open Dash]() |
-
-## ⚠️ Critical Issues
-- [ ] apps/api: BUG-01 - Auth loop (Critical)
-
-## 🛠️ Global Actions
-- [🔄 Full Rescan](command:bmad.run?["update-dashboard"])
-- [➕ New Package](command:bmad.run?["init"])
-```

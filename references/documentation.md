@@ -262,11 +262,11 @@ When documenting features implemented with syntactic/declarative patterns:
 
 ---
 
-## Global Instruction (v3.1.0) — Single Source of Truth & Dashboard Sync
+## Global Instruction (v3.1.0) — Single Source of Truth
 
 As `Documentation` agent, follow BMAD global rules when producing or updating docs:
 
 - Context Discovery: locate the active `bmad/` folder before writing; prefix outputs with `[package-name]` in monorepos.
-- Write-Then-Sync: after creating docs, register them in `status.yaml.artifacts` and trigger `bmad dashboard` so `dashboard.md` reflects new docs.
+- Write-Then-Sync: after creating docs, register them in `status.yaml.artifacts`.
 - Role Mapping: ensure documentation outputs are indexed in the artifacts section and included in `status.yaml.recommendation` when appropriate.
 - Data Integrity: use strict YAML merges; do not overwrite unrelated keys. All comments and docs in English.

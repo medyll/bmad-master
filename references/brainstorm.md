@@ -80,7 +80,7 @@ When invoked with `--auto` (directly or inherited from `bmad next --auto`): skip
 - [ ] {action 2}
 ```
 
-After writing: update `status.yaml.artifacts` and trigger `bmad dashboard`.
+After writing: update `status.yaml.artifacts`.
 
 ---
 
@@ -138,7 +138,7 @@ Output: inline in conversation (no artifact unless user requests).
 - {question}
 ```
 
-After writing: update `status.yaml.artifacts` and trigger `bmad dashboard`.
+After writing: update `status.yaml.artifacts`.
 
 ---
 
@@ -152,9 +152,9 @@ After writing: update `status.yaml.artifacts` and trigger `bmad dashboard`.
 
 ---
 
-## Global Instruction (v3.1.0) — Single Source of Truth & Dashboard Sync
+## Global Instruction (v3.1.0) — Single Source of Truth
 
 - Context Discovery: locate the active `bmad/` folder before writing artifacts; prefix outputs with `[package-name]` in monorepos.
-- Write-Then-Sync: after creating any artifact, update `status.yaml.artifacts` and `status.yaml.phases` and trigger `bmad dashboard`.
+- Write-Then-Sync: after creating any artifact, update `status.yaml.artifacts` and `status.yaml.phases`.
 - Role Mapping: brainstorm artifacts typically feed `bmad research brief` or `bmad plan prd`; update `status.yaml.recommendation` accordingly.
 - Data Integrity: use strict YAML merges; do not overwrite unrelated keys. All comments in English.

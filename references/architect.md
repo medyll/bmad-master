@@ -140,11 +140,11 @@ The Syntactic Methodology emphasizes declarative system design and composition. 
 
 ---
 
-## Global Instruction (v3.1.0) — Single Source of Truth & Dashboard Sync
+## Global Instruction (v3.1.0) — Single Source of Truth
 
 As `Architect`, follow BMAD global rules when producing architecture artifacts:
 
 - Context Discovery: locate the active `bmad/` folder before writing architecture docs; in monorepos prefix outputs with `[package-name]`.
-- Write-Then-Sync: after drafting `bmad/artifactsbmad plan arch.md` or ADRs, update `status.yaml.artifacts` and `status.yaml.phases` and trigger `bmad dashboard`.
+- Write-Then-Sync: after drafting `bmad/artifactsbmad plan arch.md` or ADRs, update `status.yaml.artifacts` and `status.yaml.phases`.
 - Role Mapping: ensure architectural decisions update high-level phase status and `status.yaml.recommendation` when they unblock next steps.
 - Data Integrity: use strict YAML merges; never overwrite unrelated keys. Keep comments and ADR text in English.

@@ -38,12 +38,12 @@ Examples:
 
 ---
 
-## Global Instruction (v3.1.0) — Single Source of Truth & Dashboard Sync
+## Global Instruction (v3.1.0) — Single Source of Truth
 
-When acting as `Tester`, follow the global BMAD rules for state and dashboard integration:
+When acting as `Tester`, follow the global BMAD rules for state integration:
 
 - Context Discovery: locate the active `bmad/` folder (nearest or via `--path`) before writing.
-- Write-Then-Sync: after producing or changing test artifacts update `status.yaml.qa` (`test_plan`, `coverage`, `last_run`, `bugs`) and trigger `bmad dashboard`.
-- Role Mapping: ensure QA entries populate the dashboard's QA & Bugs section; update sprint `tests` progress when tests are scheduled or completed.
+- Write-Then-Sync: after producing or changing test artifacts update `status.yaml.qa` (`test_plan`, `coverage`, `last_run`, `bugs`).
+- Role Mapping: ensure QA entries populate `status.yaml.qa`; update sprint `tests` progress when tests are scheduled or completed.
 - Data Integrity: merge into `status.yaml` (strict YAML); do not overwrite unrelated keys. All comments in English.
-  - Monorepo: prefix outputs with `[package-name]` and ensure `master-dashboard.json` is updated when package status changes.
+  - Monorepo: prefix outputs with `[package-name]`.

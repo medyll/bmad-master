@@ -92,5 +92,5 @@ discussions:
     artifact: "bmad/artifacts/discussions/disc-001-2026-03-02.md"
 ```
 
-Trigger `bmad dashboard` after appending.
+Update `status.yaml` after appending.
 

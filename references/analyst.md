@@ -33,10 +33,10 @@ Always read the relevant reference file before responding to a command.
 
 ---
 
-## Global Instruction (v3.1.0) — Single Source of Truth & Dashboard Sync
+## Global Instruction (v3.1.0) — Single Source of Truth
 
 - Context Discovery: locate the active `bmad/` folder before writing artifacts; prefix outputs with `[package-name]` in monorepos.
-- Write-Then-Sync: after creating any artifact, update `status.yaml.artifacts` and `status.yaml.phases` and trigger `bmad dashboard`.
+- Write-Then-Sync: after creating any artifact, update `status.yaml.artifacts` and `status.yaml.phases`.
 - Role Mapping: ensure product briefs update high-level phase state and `status.yaml.recommendation` with the next logical step.
 - Data Integrity: use strict YAML merges for `status.yaml`; do not overwrite unrelated keys. All comments in English.
 

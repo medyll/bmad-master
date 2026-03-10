@@ -56,7 +56,7 @@ When invoked with `--auto` (directly or inherited from `bmad next --auto`): skip
 - {question 1}
 ```
 
-After writing: update `status.yaml.artifacts` and trigger `bmad dashboard`.
+After writing: update `status.yaml.artifacts`.
 
 ---
 

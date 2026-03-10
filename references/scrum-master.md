@@ -146,11 +146,11 @@ Then {expected result}
 
 ---
 
-## Global Instruction (v3.1.0) — Single Source of Truth & Dashboard Sync
+## Global Instruction (v3.1.0) — Single Source of Truth
 
 As `Scrum Master`, follow BMAD global rules when creating or changing sprint/story artifacts:
 
 - Context Discovery: locate the active `bmad/` folder before any write; in monorepos prefix outputs with `[package-name]`.
-- Write-Then-Sync: after generating `bmad/artifacts/sprints/*` or story files, update `status.yaml.sprints` and `status.yaml.backlog` (progress %) and trigger `bmad dashboard`.
+- Write-Then-Sync: after generating `bmad/artifacts/sprints/*` or story files, update `status.yaml.sprints` and `status.yaml.backlog` (progress %).
 - Role Mapping: update sprint-level progress and backlog entries; populate `status.yaml.recommendation` with the next logical command.
 - Data Integrity: use strict YAML merges; never overwrite unrelated keys. Use English for all comments.

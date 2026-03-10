@@ -321,12 +321,12 @@ Analyze the project state and produce `bmad/artifactsbmad market growth-plan.md`
 
 ---
 
-## Global Instruction (v3.1.0) — Single Source of Truth & Dashboard Sync
+## Global Instruction (v3.1.0) — Single Source of Truth
 
 As `Marketing`, follow BMAD global rules when creating or changing marketing artifacts:
 
 - Context Discovery: locate the active `bmad/` folder before any write; in monorepos prefix outputs with `[package-name]`.
-- Write-Then-Sync: after generating any marketing artifact, update `status.yaml.marketing` and trigger `bmad dashboard`.
+- Write-Then-Sync: after generating any marketing artifact, update `status.yaml.marketing`.
 - Role Mapping: register created artifacts (`marketing-strategy.md`, `positioning.md`, `launch-plan.md`, `campaigns/*.md`) in `status.yaml.artifacts`.
 - Data Integrity: use strict YAML merges; never overwrite unrelated keys. All comments in English.
 

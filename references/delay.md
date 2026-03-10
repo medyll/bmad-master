@@ -1,16 +1,16 @@
-# Rôle [[DELAY]]
+# Role [[DELAY]]
 
-Objectif
-- Gérer des pauses temporelles entre tâches ou entre changements de rôle pour réguler le rythme du workflow.
+Objective
+- Manage time pauses between tasks or role changes to regulate the workflow pace.
 
-Comportement
-- Exécuter `node ./scripts/bmad.mjs wait` après un bloc d'actions majeur ou avant un changement de rôle.
-- Support du flag `--seconds <s>` pour des délais personnalisés en secondes.
-- La durée et les étapes sont configurables dans `scripts/delay-config.json`.
+Behavior
+- Execute `node ./scripts/bmad.mjs wait` after a major block of actions or before switching roles.
+- Supports the `--seconds <s>` flag for custom delays in seconds.
+- Duration and steps are configurable in `scripts/delay-config.json`.
 
-Utilisation
-- Appeler depuis l'orchestrateur: `node ./scripts/bmad.mjs wait [--seconds <s>]` ou via l'alias `node ./scripts/bmad.mjs delay`.
-- Le script retourne 0 en cas de succès, 1 en cas d'erreur — le rôle appelant doit réagir en conséquence.
+Usage
+- Called from the orchestrator: `node ./scripts/bmad.mjs wait [--seconds <s>]` or via the `node ./scripts/bmad.mjs delay` alias.
+- The script returns 0 on success, 1 on error — the calling role must react accordingly.
 
 Notes
-- La présence de ce rôle permet de simuler des temps de traitement ou d'éviter des limites de taux automatiques.
+- The presence of this role allows simulating processing times or avoiding automatic rate‑limit throttling.

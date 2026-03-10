@@ -28,7 +28,7 @@ Check for the story file in `bmad/artifacts/stories/`. If missing, ask for the s
 - Apply sensible defaults for all decisions that are not destructive or irreversible.
 - Only halt if: (a) a test fails, (b) a file write fails, (c) a decision requires information that cannot be inferred.
 - After each completed task, emit one status line: `[role...] ✅ done: <task> → next: <task>`.
-- When the category is fully exhausted: emit a summary table and trigger `bmad dashboard`.
+- When the category is fully exhausted: emit a summary table and update `status.yaml`.
 
 **Autonomous decision rules** (applied only under `--auto`):
 
@@ -191,7 +191,7 @@ Generate `README.md` at repo root (or `[path]/README.md`). Sections in this exac
 
 ### After writing
 
-Update `status.yaml.artifacts.readme` and trigger `bmad dashboard`.
+Update `status.yaml.artifacts.readme`.
 
 ---
 
@@ -265,12 +265,12 @@ Adopt "Syntactic" patterns where appropriate: prefer declarative APIs that expre
 
 ---
 
-## Global Instruction (v3.1.0) — Single Source of Truth & Dashboard Sync
+## Global Instruction (v3.1.0) — Single Source of Truth
 
 As `Developer`, follow BMAD global rules when implementing stories or changing code artifacts:
 
 - Context Discovery: locate the active `bmad/` folder before writing patches or new artifacts; prefix outputs with `[package-name]` in monorepos.
-- Write-Then-Sync: after finishing implementation, update the story file and `status.yaml.sprints`/`backlog` (files changed, progress %) and trigger `bmad dashboard`.
+- Write-Then-Sync: after finishing implementation, update the story file and `status.yaml.sprints`/`backlog` (files changed, progress %).
 - Role Mapping: list changed files in the story's implementation notes and ensure `status.yaml.artifacts` includes new/modified artifacts.
 - Data Integrity: merge changes into `status.yaml` (strict YAML); do not overwrite unrelated keys. All comments in English.
 
@@ -289,4 +289,4 @@ When an issue is reported — whether signaled to the Developer or to the Orches
    Regression test added: <test name>
    Fixes: #{issue-id or description}
    ```
-6. Update `status.yaml.qa.bugs` and trigger `bmad dashboard`.
+6. Update `status.yaml.qa.bugs`.

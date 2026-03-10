@@ -22,7 +22,7 @@
 
 **3. Synthesis** – Compute health score, build severity matrix, prioritize recommendations
 
-**4. Output** – Write artifact, update `status.yaml`, auto-create stories for Critical findings, trigger `bmad dashboard`
+**4. Output** – Write artifact, update `status.yaml`, auto-create stories for Critical findings
 
 ---
 

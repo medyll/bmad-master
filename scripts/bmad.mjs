@@ -207,9 +207,6 @@ class Bmad {
       '# BMAD UI Architecture',
       `> Generated: ${generatedAt}`,
       '',
-      '## Layout Sections',
-      '| Section | Role | Description | HTML descriptor |',
-      '| --- | --- | --- | --- |',
     ];
     for (const section of blueprint.sections) {
       lines.push(`| ${section.id} | ${section.role} | ${section.description} | \`${section.html}\` |`);

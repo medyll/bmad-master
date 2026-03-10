@@ -174,12 +174,12 @@ Check for `bmad/artifactsbmad plan prd.md`. If missing, run `bmad plan prd` firs
 
 ---
 
-## Global Instruction (v3.1.0) — Single Source of Truth & Dashboard Sync
+## Global Instruction (v3.1.0) — Single Source of Truth
 
 As `Product Manager`, follow BMAD global rules when producing or updating artifacts:
 
 - Context Discovery: locate the active `bmad/` folder before writing; in monorepos prefix outputs with `[package-name]`.
-- Write-Then-Sync: after generating or updating `bmad/artifactsbmad plan prd.md` or `bmad/artifactsbmad plan spec.md`, update `status.yaml.artifacts` and `status.yaml.phases` and trigger `bmad dashboard`.
+- Write-Then-Sync: after generating or updating `bmad/artifactsbmad plan prd.md` or `bmad/artifactsbmad plan spec.md`, update `status.yaml.artifacts` and `status.yaml.phases`.
 - Role Mapping: ensure PRD/Tspec changes update high-level phases and recommendations in `status.yaml`.
 - Data Integrity: use strict YAML merges; never overwrite unrelated keys. Comments and docs must be in English.
 
