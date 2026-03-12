@@ -108,7 +108,122 @@ class Bmad {
     await this.delay(seconds, logLevel);
   }
 
+  uiBlueprint() {
+    return {
+      overview: 'Single-page orchestrator workspace built with simple semantic HTML descriptors.',
+      sections: [
+        {
+          id: 'app-shell',
+          role: 'orchestrator',
+          description: 'Global shell that holds navigation, status, and workspace.',
+          html: '<div class="app-shell">',
+        },
+        {
+          id: 'hero',
+          role: 'marketing',
+          description: 'Hero banner communicating progress and invites.',
+          html: '<header class="hero">',
+        },
+        {
+          id: 'nav',
+          role: 'scrum-master',
+          description: 'Primary navigation for phases, sprints, and stories.',
+          html: '<nav class="main-nav">',
+        },
+        {
+          id: 'dashboard-grid',
+          role: 'orchestrator',
+          description: 'KPI grid and blocker cards.',
+          html: '<section class="dashboard-grid">',
+        },
+        {
+          id: 'story-queue',
+          role: 'developer',
+          description: 'Story list with status chips.',
+          html: '<section class="story-queue">',
+        },
+        {
+          id: 'detail-pane',
+          role: 'developer',
+          description: 'Command pane for the active work item.',
+          html: '<aside class="detail-pane">',
+        },
+        {
+          id: 'activity-timeline',
+          role: 'scrum-master',
+          description: 'Timeline of recent commands and commits.',
+          html: '<section class="activity-timeline">',
+        },
+        {
+          id: 'footer',
+          role: 'orchestrator',
+          description: 'Global footer with metadata links.',
+          html: '<footer class="global-footer">',
+        },
+      ],
+      descriptors: [
+        {
+          name: 'story-card',
+          description: 'Card summarizing a story and owner.',
+          html: '<article class="story-card"><h3>Story</h3><p>Status</p></article>',
+        },
+        {
+          name: 'command-row',
+          description: 'Inline actions for planning/tests.',
+          html: '<div class="command-row"><button>Plan</button><button>Test</button></div>',
+        },
+        {
+          name: 'status-pill',
+          description: 'Chip showing current state.',
+          html: '<span class="status-pill">⚡ In progress</span>',
+        },
+      ],
+      behavior: [
+        {
+          name: 'refresh-trigger',
+          description: 'Refresh button for dashboard data.',
+          html: '<button class="refresh">↻ Refresh</button>',
+        },
+        {
+          name: 'quick-actions',
+          description: 'Quick links to orchestrator commands.',
+          html: '<div class="quick-actions"><a>Next</a><a>Connector</a></div>',
+        },
+        {
+          name: 'story-details',
+          description: 'Expanded view with commands.',
+          html: '<div class="story-details"><h4>Story</h4><p>Summary</p></div>',
+        },
+      ],
+    };
+  }
 
+  renderUiMarkdown(blueprint) {
+    const generatedAt = new Date().toISOString();
+    const lines = [
+      '# BMAD UI Architecture',
+      `> Generated: ${generatedAt}`,
+      '',
+    ];
+    for (const section of blueprint.sections) {
+      lines.push(`| ${section.id} | ${section.role} | ${section.description} | \`${section.html}\` |`);
+    }
+    lines.push('', '## UI Descriptors', '| Name | Description | HTML snippet |', '| --- | --- | --- |');
+    for (const desc of blueprint.descriptors) {
+      lines.push(`| ${desc.name} | ${desc.description} | \`${desc.html}\` |`);
+    }
+    lines.push('', '## Interaction Patterns', '| Name | Description | HTML snippet |', '| --- | --- | --- |');
+    for (const item of blueprint.behavior) {
+      lines.push(`| ${item.name} | ${item.description} | \`${item.html}\` |`);
+    }
+    lines.push(
+      '',
+      '## Usage',
+      '- Run `bmad ui` to refresh this blueprint whenever layouts evolve.',
+      '- Connector reads this file along with `references/ui-architecture.md`.',
+    );
+    return lines.join('\n') + '\n';
+  }
 
   async loadYaml() {
     try {
@@ -296,6 +411,18 @@ class Bmad {
 
     await fs.writeFile(outPath, md, 'utf8');
     this.log('snapshot', 'saved →', path.relative(this.cwd, outPath));
+  }
+
+
+  async ui(bmadDir) {
+    const dir = bmadDir ? path.resolve(bmadDir) : path.join(this.cwd, 'bmad');
+    const artifactsDir = path.join(dir, 'artifacts');
+    const outPath = path.join(artifactsDir, 'ui-architecture.md');
+    const blueprint = this.uiBlueprint();
+    await fs.mkdir(artifactsDir, { recursive: true });
+    const md = this.renderUiMarkdown(blueprint);
+    await fs.writeFile(outPath, md, 'utf8');
+    this.log('ui', 'written →', path.relative(this.cwd, outPath));
   }
 
   /**

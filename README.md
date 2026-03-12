@@ -18,17 +18,15 @@ A multi-role AI orchestrator for structured software project management based on
 
 ## Key commands
 
-- `workflow-init` — initialize a new project (creates `bmad/` folder structure)
-- `analyze-context` — take over an existing project
-- `status` / `workflow-status` — display project dashboard
-- `next` — proactively suggest the most logical next step
-- `update-dashboard` — regenerate `dashboard.md` (and `master-dashboard.json` in monorepos)
-- `add-knowledge` — ingest new documentation and apply it to role reference files
+- `init` — initialize a new project (creates `bmad/` folder structure)
+- `analyze` — take over an existing project
+- `status` — display project status
+- `next [--auto]` — proactively suggest the next step (or execute it with --auto)
 - `repair` — run the internal installer and verify the script environment (useful after skill updates)
 
 ## Compatibility
 
-Requires `mcp_v2`. Supports monorepos by scanning for multiple `bmad/` instances.
+Requires `mcp_v2`. 
 
 ## Compatibility status
 

@@ -1,93 +1,129 @@
 ---
 name: bmad-master
 description: |-
-  Full-stack project orchestration skill covering the entire software development lifecycle.
-  Use this skill whenever a user wants to manage, plan, build, or ship a software project —
-  including initializing a project structure, writing PRDs or tech specs, managing sprints and
-  stories, implementing features, reviewing or refactoring code, running tests, auditing the
-  codebase, generating documentation or READMEs, exploring ideas, or planning a launch.
-  Also trigger for: "what should I do next?", "create a sprint", "make a roadmap", "audit my code",
-  "help me plan this feature", "write the spec", "generate a README", or any multi-step dev workflow.
-  Commands: [init] [status] [next] [plan] [sprint] [dev] [test] [audit] [doc] [readme] [explore] [market] [fix]
-argument-hint: "init, analyze, sync, status, dashboard, next, next --auto, repair, plan prd, plan spec, plan arch --stack, plan arch --stack, plan roadmap, sprint, sprint story, sprint backlog, dev story <id>, dev review, dev refactor, readme, readme --user, readme --api, readme --dev, readme --full, test plan, test unit, test e2e, test qa, test bugs, audit, audit --full, audit --code, audit --arch, audit --security, audit --perf, audit --doc, audit --deps, doc, doc --coauthor, doc report, doc spec, explore, explore --ideate, explore --directions, research, research brief, market, market campaign, market launch, market position, market growth, market message, add, fix, fix --syntax, fix --upgrade, fix --design, --delay <seconds>"
+  Simple project orchestrator for managing development workflows.
+  Use for: creating project structure, planning work, tracking progress, writing docs, running tests, auditing code.
+  Triggers: "what's next?", "create sprint", "make roadmap", "audit code", "help plan", "write spec", "generate README".
+  Commands: [init] [analyze] [status] [next] [plan] [sprint] [dev] [test] [audit] [doc] [readme] [fix]
+argument-hint: "init, analyze, status, next, next --auto, plan prd, plan spec, plan arch, sprint, sprint story, dev story, dev review, test unit, test e2e, audit, audit --code, doc, readme, fix"
 compatibility:
   - mcp_v2
 user-invocable: true
 disable-model-invocation: false
 license: MIT
 metadata:
-  version: "3.0.0"
-  release: "v3.2.0"
+  version: "4.0.0"
+  release: "v4.0.0 – Simplified Edition"
   author: medyll
 ---
 
-# BMAD Complete – Multi-Role Orchestrator (Proactive Edition)
+# BMAD – Simple Project Orchestrator
 
-## Syntax
+## Core Behavior
 
-```
-bmad-master <verb> [noun] [--flag] [--delay <seconds>]
-```
+**This skill does ONE thing:** Read `bmad/status.yaml` and tell you what to do next.
 
-All commands follow this pattern. Examples: `bmad-master init`, `bmad-master plan prd`, `bmad-master audit --code`, `bmad-master dev story ST-104`, `bmad-master next --auto --delay 2`.
+If no `bmad/` folder exists, suggest creating one with `bmad init`.
 
 ---
 
-## Commands at a Glance
+## Commands (All That Exist)
 
-→ See `references/commands-detailed.md` for full specs.
+### 1. `bmad init`
+Create project folder structure. Creates `bmad/` with:
+- `status.yaml` (tracks project phase and progress)
+- `artifacts/` (stores all output files)
+- `config.yaml` (project settings)
 
-| Verb | Examples | Role |
-|------|----------|------|
-| **init** | `init` · `analyze` | Orchestrator |
-| **status** | `status` · `dashboard` · `next [--auto]` | Orchestrator |
-| **plan** | `plan prd` · `plan spec` · `plan arch` | PM/Architect |
-| **sprint** | `sprint` · `sprint story` | Scrum Master |
-| **dev** | `dev story <id>` · `dev review` | Developer |
-| **test** | `test unit` · `test e2e` | Tester |
-| **audit** | `audit [--code\|--arch]` | Analyst |
-| **doc** | `doc` · `doc --coauthor` | Documentation |
-| **explore** | `explore` · `research` | Analyst/Brainstorm |
-| **market** | `market [launch\|position]` | Marketing |
-| **readme** | `readme [--user\|--api\|--dev]` | Developer |
-| **fix** | `fix [--syntax\|--upgrade]` | Developer |
-| **Global** | `--delay <seconds>` · `--auto` | All roles |
+### 2. `bmad analyze`
+Analyze existing project. Generates `status.yaml` based on current code.
 
-→ Role files: `references/{analyst,brainstorm,pm,architect,scrum-master,developer,tester,documentation,marketing,no-entropy-principle}.md`
+### 3. `bmad status`
+Read and display `status.yaml`. Shows: current phase, progress, next recommended action.
+
+### 4. `bmad next [--auto]`
+Execute the next logical step from `status.yaml`.
+
+**Without `--auto`:** Do one task, stop, ask for confirmation.
+
+**With `--auto`:** Keep doing tasks in the current category until done. No confirmations.
+
+### 5. `bmad plan <type>`
+Create a plan document. Types: `prd`, `spec`, `arch`.
+
+Output: `bmad/artifacts/plan-{type}.md`
+
+### 6. `bmad sprint`
+Create sprint. Output: `bmad/artifacts/sprint-{date}.md`
+
+### 7. `bmad sprint story`
+Add story to current sprint.
+
+### 8. `bmad dev story <id>`
+Implement a story. Output: code changes + test updates.
+
+### 9. `bmad dev review`
+Review code changes. Output: feedback + fixes.
+
+### 10. `bmad test <type>`
+Run tests. Types: `unit`, `e2e`.
+
+### 11. `bmad audit [--code]`
+Audit codebase for issues. Output: `bmad/artifacts/audit-{date}.md`
+
+### 12. `bmad doc`
+Generate documentation. Output: `bmad/artifacts/docs/`
+
+### 13. `bmad readme`
+Generate README.md for project.
+
+### 14. `bmad fix [--syntax]`
+Fix issues in code.
 
 ---
 
-## Role Detection (Orchestrator Logic)
+## How It Works
 
-1. **Parse Intent**: Accept both explicit commands (`bmad-master readme`)  (`bmad-master next`)   (`bmad-master next --auto`) and natural language (`"make a readme"`, `"document the project"`, `"fait un readme"`). Map the user's intent to the nearest entry in the Command Reference table. When ambiguous, pick the most likely match and state which command you're running: `[orchestrator→developer] running: bmad-master readme`.
-   **Flag Inheritance**: When routing to a sub-role (e.g., `bmad-master next --auto` resolves to `bmad-master dev story S1-03`), always carry all active flags — especially `--auto` — into the sub-role execution. The developer, tester, or any other role receiving a task from `bmad-master next --auto` MUST operate as if it was called with `--auto` directly. Never drop the flag at routing time.
-2. **Profile Adaptation**: Detect user profile (Beginner / Senior ).
-   - *TDAH*: Lists, bolding, clear milestones.
-   - *Senior*: Direct technical data, no fluff.
-3. **Legacy Analysis**: If code/docs exist without `bmad/`, suggest `bmad-master analyze`.
-4. **Read Reference**: Load the role file from the Role→File Routing table before responding. **Never respond without reading the role file first.**
-5. **Update `status.yaml`**: Mark artifacts as completed after execution.
-6. **Code Standards**: All code comments in English.
-7. **Context Awareness**: Multiple `bmad/` folders → prefix responses with `[package-name]`.
-8. **Auto-Sync Trigger**: Every command finalizing a state MUST call `bmad-master dashboard`. This includes creating/editing any story, sprint, PRD, architecture, tech-spec, audit, test plan, bug, README, or `status.yaml`. When in doubt, update.
-9. **Inter-Role Discussions**: Cross-role dependency/conflict → open thread in `bmad/artifacts/discussions/`. See `references/role-discussions.md`.
-10. **Marketing Auto-Trigger**: Activates when: PRD created/updated with major feature → run `bmad-master market position`; sprint with "launch"/"release" story → propose `bmad-master market launch`; `bmad-master init` completes → ask 5 onboarding questions and generate `marketing-brief.md`.
-11. **Formatting**: Tables, bolding, horizontal rules for scannability.
+1. **Check for `bmad/` folder** in current directory or parent.
+2. **If found:** Read `bmad/status.yaml` → extract current phase, progress, next action.
+3. **Print status line:** `[orchestrator] resuming: <project> | phase: <phase> | next: <action>`
+4. **Execute command** (the one the user asked for).
+5. **Done.** No extra logic, no role routing, no ghost logic.
 
 ---
 
-## Command Details & Autonomous Mode
+## Flags
 
-→ See `references/commands-detailed.md` for full orchestrator command specs.
-→ See `references/orchestrator-advanced.md` for Global Rules v3.1.0, `--auto` mode, and deployment strategies.
+- `--auto`: Run continuously without stopping (until done or error).
+- `--delay <seconds>`: Wait N seconds between actions (for rate-limiting).
 
 ---
 
-## Session Awareness — READ FIRST
+## Output Files
 
-**You ARE `/bmad-master`.** On every session start:
-1. Check for `bmad/` in cwd or parent (project root).
-2. If exists → read `bmad/status.yaml`, emit: `[orchestrator] resuming: <project-name> | phase: <phase> | next: <recommendation>`, then execute user's command.
-3. If not → suggest `bmad-master init` or `bmad-master analyze`.
+All outputs go to `bmad/artifacts/` or subdirectories.
 
-**Never confuse `bmad/` (data folder) with `/bmad-master` (this skill).** → See `references/orchestrator-advanced.md` for full rules.
+Examples:
+- `bmad/artifacts/prd.md` (from `plan prd`)
+- `bmad/artifacts/sprint-2026-03-12.md` (from `sprint`)
+- `bmad/artifacts/stories/story-1.md` (from `sprint story`)
+
+---
+
+## What This Skill Is NOT
+
+- ❌ Does NOT invent tools or functions
+- ❌ Does NOT pretend to create files it doesn't really create
+- ❌ Does NOT guess what to do if the command is unclear
+- ❌ Does NOT route to multiple "roles" — it just reads status.yaml and acts
+- ❌ Does NOT require reading other reference files
+
+---
+
+## What This Skill DOES
+
+- ✅ Reads real files from disk
+- ✅ Executes real commands (or writes real artifacts)
+- ✅ Updates status.yaml when major milestones are reached
+- ✅ Suggests the next logical step based on current project state
+- ✅ Stops if something fails (no hallucinations)
