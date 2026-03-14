@@ -29,6 +29,7 @@
 ### `bmad plan <type>`
 **What:** Create a planning document.
 **Types:** `prd` (Product Requirements), `spec` (Technical Spec), `arch` (Architecture).
+**With --auto:** Keep prd , spec and arch (no prompts).
 **Creates:** `bmad/artifacts/plan-{type}-{date}.md`
 **Example:** `bmad plan prd` or `bmad plan arch`
 
@@ -41,12 +42,14 @@
 **What:** Add a story to current sprint.
 **Creates:** `bmad/artifacts/stories/{story-id}.md`
 **Example:** `bmad sprint story`
+**Note:** At the end of each story the orchestrator will generate or update `README.md` in the project root to summarise the story, its outcomes and related artifacts.
 
 ### `bmad dev story <id>`
 **What:** Implement a specific story.
 **Input:** Story ID (e.g., `S1-01`).
 **Output:** Code changes, tests, commit.
 **Example:** `bmad dev story S1-01`
+**Note:** After completing a story, `bmad` will also update or create `README.md` to include a concise summary of the story, key artifacts and any important usage or deployment notes.
 
 ### `bmad dev review`
 **What:** Review code changes.
@@ -74,6 +77,7 @@
 **What:** Generate a README for the project.
 **Creates:** `README.md` in project root.
 **Example:** `bmad readme`
+**Templates & behavior:** Ship with the skill in `references/readme-templates/` as `README.simple.md`, `README.intermediate.md`, and `README.advanced.md`. The skill composes these into a single canonical template stored at `references/readme-template.md` (containing the three sections). You may pass `bmad readme --level <level>` to indicate a preferred level. Use `bmad readme --fill` to analyze the project and write a pre-filled draft to `bmad/artifacts/docs/README.draft.md`. The skill will not overwrite the project's root `README.md` by default.
 
 ### `bmad fix [--syntax]`
 **What:** Fix issues in the code.
@@ -170,4 +174,3 @@ bmad dev review             # Review changes
 - Run `bmad status` to see current state
 - Run `bmad next` (without --auto) to see what's supposed to happen
 
-That's it. No "orchestrator roles", no "role detection", no "global rules".

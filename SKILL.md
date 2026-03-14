@@ -60,7 +60,7 @@ Create sprint. Output: `bmad/artifacts/sprint-{date}.md`
 Add story to current sprint.
 
 ### 8. `bmad dev story <id>`
-Implement a story. Output: code changes + test updates.
+Implement a story. Output: code changes, test updates, and update/create `README.md` summarizing the story and produced artifacts.
 
 ### 9. `bmad dev review`
 Review code changes. Output: feedback + fixes.
@@ -75,7 +75,7 @@ Audit codebase for issues. Output: `bmad/artifacts/audit-{date}.md`
 Generate documentation. Output: `bmad/artifacts/docs/`
 
 ### 13. `bmad readme`
-Generate README.md for project.
+Generate a README template for the project. The skill maintains a combined template file at `references/readme-template.md` which contains three progressive sections in the same document — `Simple`, `Intermediate`, and `Advanced`. Templates are bundled in `references/readme-templates/`; the skill can compose them into the single canonical `references/readme-template.md`. Use `bmad readme --fill` to ask the skill to analyze the project (scan `package.json`, `requirements.txt`, `src/`, `tests/`) and produce a filled draft at `bmad/artifacts/docs/README.draft.md`. The `--level` flag is a preference but the draft includes all three sections.
 
 ### 14. `bmad fix [--syntax]`
 Fix issues in code.
@@ -107,6 +107,7 @@ Examples:
 - `bmad/artifacts/prd.md` (from `plan prd`)
 - `bmad/artifacts/sprint-2026-03-12.md` (from `sprint`)
 - `bmad/artifacts/stories/story-1.md` (from `sprint story`)
+- `README.md` (updated after each story to summarize work and artifacts)
 
 ---
 

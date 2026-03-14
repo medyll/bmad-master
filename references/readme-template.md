@@ -1,6 +1,6 @@
-# bmad-master
+# {{project_name}}
 
-> Auto-generated README — includes three progressive levels: Simple → Intermediate → Advanced.
+> Auto-generated README template — includes three progressive levels: Simple → Intermediate → Advanced.
 
 ## Simple
 
