@@ -17,6 +17,9 @@
  *   delay [--seconds <s>]  Alias for wait
  *   install                Install required dependencies (js-yaml)
  *   repair                 Verify environment and fix issues
+ *   config set <key> <val>  Set a skill reference override (e.g. theme, role ref)
+ *   config get [key]        Show current config overrides
+ *   config unset <key>      Remove an override
  */
 
 import fs from 'fs/promises';
@@ -419,6 +422,105 @@ sprints: []
   }
 
   /**
+   * config — manage skill reference overrides
+   * Stored in the skill's own references/overrides.json
+   *
+   * Supported keys:
+   *   theme              Path to project CSS theme file
+   *   role.<name>.ref    Extra reference file for a role
+   *   role.<name>.prompt Additional prompt/context for a role
+   */
+  async configCmd(action, key, value) {
+    const overridesPath = path.join(__dirname, '..', 'references', 'overrides.json');
+
+    // Load existing overrides
+    let overrides = {};
+    try {
+      overrides = JSON.parse(await fs.readFile(overridesPath, 'utf8'));
+    } catch {}
+
+    if (action === 'get') {
+      if (key) {
+        const val = this.getNestedKey(overrides, key);
+        if (val !== undefined) {
+          console.log(`${key} = ${typeof val === 'object' ? JSON.stringify(val, null, 2) : val}`);
+        } else {
+          console.log(`${key} is not set`);
+        }
+      } else {
+        if (Object.keys(overrides).length === 0) {
+          console.log('No overrides configured.');
+        } else {
+          console.log(JSON.stringify(overrides, null, 2));
+        }
+      }
+      return;
+    }
+
+    if (action === 'set') {
+      if (!key || value === undefined) {
+        this.err('config', 'Usage: bmad config set <key> <value>');
+        process.exit(1);
+      }
+      // Resolve relative paths to absolute for file references
+      let resolvedValue = value;
+      if (key === 'theme' || key.endsWith('.ref')) {
+        const absPath = path.resolve(this.cwd, value);
+        try {
+          await fs.access(absPath);
+          resolvedValue = absPath;
+        } catch {
+          this.err('config', `File not found: ${absPath}`);
+          process.exit(1);
+        }
+      }
+      this.setNestedKey(overrides, key, resolvedValue);
+      await fs.writeFile(overridesPath, JSON.stringify(overrides, null, 2), 'utf8');
+      this.log('config', `set ${key} = ${resolvedValue}`);
+      return;
+    }
+
+    if (action === 'unset') {
+      if (!key) {
+        this.err('config', 'Usage: bmad config unset <key>');
+        process.exit(1);
+      }
+      this.deleteNestedKey(overrides, key);
+      await fs.writeFile(overridesPath, JSON.stringify(overrides, null, 2), 'utf8');
+      this.log('config', `unset ${key}`);
+      return;
+    }
+
+    console.error(`Unknown config action: ${action}\nUsage: bmad config <get|set|unset> [key] [value]`);
+    process.exit(1);
+  }
+
+  // Helpers for nested dot-notation keys (e.g. "role.designer.ref")
+  getNestedKey(obj, key) {
+    return key.split('.').reduce((o, k) => o?.[k], obj);
+  }
+
+  setNestedKey(obj, key, value) {
+    const parts = key.split('.');
+    let cur = obj;
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (!cur[parts[i]] || typeof cur[parts[i]] !== 'object') cur[parts[i]] = {};
+      cur = cur[parts[i]];
+    }
+    cur[parts[parts.length - 1]] = value;
+  }
+
+  deleteNestedKey(obj, key) {
+    const parts = key.split('.');
+    let cur = obj;
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (!cur[parts[i]]) return;
+      cur = cur[parts[i]];
+    }
+    delete cur[parts[parts.length - 1]];
+  }
+
+  /**
    * install — install required npm dependencies
    */
   async install() {
@@ -796,6 +898,7 @@ const commands = {
   analyze:   (a) => bmad.analyze(a[0]),
   status:    (a) => bmad.status(a[0]),
   next:      (a) => bmad.next(a[0]),
+  config:    (a) => bmad.configCmd(a[0], a[1], a.slice(2).join(' ') || undefined),
   install:   () => bmad.install(),
   repair:    () => bmad.repair(),
   snapshot:  (a) => bmad.snapshot(a[0]),
