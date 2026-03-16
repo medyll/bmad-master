@@ -1,23 +1,32 @@
 #!/usr/bin/env node
 /**
- * bmad.mjs — BMAD unified script runner + delay handler
+ * bmad.mjs — BMAD unified script runner
  *
  * Usage:
  *   node bmad.mjs <command> [args]
  *
  * Commands:
- *   snapshot [bmad-dir]    Snapshot bmad/status.yaml to artifacts/history/
- *   connector [bmad-dir]   Generate bmad/artifacts/connector.yml
- *   wait [--ms <ms>]       Wait/delay handler for inter-task latency
- *   delay [--ms <ms>]      Alias for wait command
+ *   init [dir]             Create bmad/ project structure
+ *   analyze [dir]          Analyze existing project → generate status.yaml
+ *   status [dir]           Display current status from status.yaml
+ *   next [dir]             Show next recommended action
+ *   snapshot [dir]         Snapshot status.yaml to artifacts/history/
+ *   connector [dir]        Generate bmad/artifacts/connector.yml
+ *   readme [--fill] [--level <l>]  Generate README template or draft
+ *   wait [--seconds <s>]   Wait/delay handler for inter-task latency
+ *   delay [--seconds <s>]  Alias for wait
  *   install                Install required dependencies (js-yaml)
- *   repair                 Run installer and verify that all required components are present
+ *   repair                 Verify environment and fix issues
  */
 
 import fs from 'fs/promises';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { spawnSync } from 'child_process';
 import { createRequire } from 'module';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ---------------------------------------------------------------------------
 
@@ -47,68 +56,15 @@ class Bmad {
     );
   }
 
-  // ── Delay/Wait Handler ────────────────────────────────────────────────────────
-
-  async delay(seconds = 1, logLevel = 'info') {
-    const ms = seconds * 1000;
-    if (logLevel === 'info' || logLevel === 'debug') {
-      console.log(`[bmad:delay] ⏳ Waiting ${seconds}s...`);
-    }
-    return new Promise((resolve) => setTimeout(resolve, ms));
+  dateStamp(d = new Date()) {
+    return `${d.getFullYear()}-${this.pad(d.getMonth() + 1)}-${this.pad(d.getDate())}`;
   }
 
-  async wait(args) {
-    let seconds = 1;
-    let logLevel = 'info';
-    let config = null;
-
-    // Parse arguments
-    for (let i = 0; i < args.length; i++) {
-      if (args[i] === '--seconds' && args[i + 1]) {
-        seconds = parseInt(args[i + 1], 10);
-        i++;
-      } else if (args[i] === '--config') {
-        config = true;
-      } else if (args[i] === '--help' || args[i] === '-h') {
-        console.log(`
-            BMAD Delay Handler
-
-            Usage:
-              node bmad.mjs wait [--seconds <seconds>]
-              node bmad.mjs wait --config
-              node bmad.mjs wait --help
-
-            Options:
-              --seconds <s>  Wait for specified seconds (default: 1)
-              --config       Show delay configuration
-              --help, -h     Show this help message
-
-            Examples:
-              node bmad.mjs wait --seconds 2
-              node bmad.mjs wait --config
-        `);
-        return;
-      }
-    }
-
-    if (config) {
-      try {
-        const scriptDir = path.dirname(import.meta.url.replace('file:///', ''));
-        const configPath = path.join(scriptDir, 'delay-config.json');
-        const configData = await fs.readFile(configPath, 'utf8');
-        const cfg = JSON.parse(configData);
-        console.log('\n📋 BMAD Delay Configuration\n');
-        console.log(JSON.stringify(cfg, null, 2));
-        return;
-      } catch (err) {
-        console.warn(`⚠️  Could not load delay-config.json:`, err.message);
-      }
-    }
-
-    await this.delay(seconds, logLevel);
+  bmadDir(override) {
+    return override ? path.resolve(override) : path.join(this.cwd, 'bmad');
   }
 
-
+  // ── YAML loader ─────────────────────────────────────────────────────────
 
   async loadYaml() {
     try {
@@ -120,7 +76,59 @@ class Bmad {
     }
   }
 
-  // ── Walker ────────────────────────────────────────────────────────────────
+  // ── Delay/Wait Handler ──────────────────────────────────────────────────
+
+  async delay(seconds = 1) {
+    const ms = seconds * 1000;
+    console.log(`[bmad:delay] Waiting ${seconds}s...`);
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async wait(args) {
+    let seconds = 1;
+    let config = false;
+
+    for (let i = 0; i < args.length; i++) {
+      if (args[i] === '--seconds' && args[i + 1]) {
+        seconds = parseInt(args[i + 1], 10);
+        i++;
+      } else if (args[i] === '--config') {
+        config = true;
+      } else if (args[i] === '--help' || args[i] === '-h') {
+        console.log(`
+BMAD Delay Handler
+
+Usage:
+  node bmad.mjs wait [--seconds <seconds>]
+  node bmad.mjs wait --config
+  node bmad.mjs wait --help
+
+Options:
+  --seconds <s>  Wait for specified seconds (default: 1)
+  --config       Show delay configuration
+  --help, -h     Show this help message
+`);
+        return;
+      }
+    }
+
+    if (config) {
+      try {
+        const configPath = path.join(__dirname, 'delay-config.json');
+        const configData = await fs.readFile(configPath, 'utf8');
+        const cfg = JSON.parse(configData);
+        console.log('\nBMAD Delay Configuration\n');
+        console.log(JSON.stringify(cfg, null, 2));
+        return;
+      } catch (err) {
+        console.warn(`Could not load delay-config.json:`, err.message);
+      }
+    }
+
+    await this.delay(seconds);
+  }
+
+  // ── Walker ──────────────────────────────────────────────────────────────
 
   async walk(dir, results = []) {
     const SKIP = new Set(['node_modules', '.git', 'dist', 'build']);
@@ -137,7 +145,7 @@ class Bmad {
     return results;
   }
 
-  // ── YAML parsers ──────────────────────────────────────────────────────────
+  // ── YAML parsers ────────────────────────────────────────────────────────
 
   parsePhase(content, YAML) {
     try {
@@ -167,6 +175,16 @@ class Bmad {
     return m ? Number(m[1]) : null;
   }
 
+  parseNextAction(content, YAML) {
+    try {
+      const data = YAML.load(content);
+      if (data?.next_action) return String(data.next_action);
+      if (data?.next) return String(data.next);
+    } catch {}
+    const m = content.match(/next(?:_action)?:\s*(.+)/);
+    return m ? m[1].trim() : null;
+  }
+
   parseQaBugs(content, YAML) {
     try {
       const data = YAML.load(content);
@@ -179,14 +197,226 @@ class Bmad {
     return [];
   }
 
-  progressEmoji(p) {
-    if (p == null) return '⚪';
-    if (p >= 50) return '🟢';
-    if (p >= 20) return '🟡';
-    return '🔴';
+  // ── Commands ────────────────────────────────────────────────────────────
+
+  /**
+   * init — create bmad/ project structure
+   */
+  async init(bmadDirOverride) {
+    const dir = this.bmadDir(bmadDirOverride);
+
+    try {
+      await fs.access(path.join(dir, 'status.yaml'));
+      this.log('init', `bmad/ already exists at ${dir}`);
+      console.log('Use `bmad analyze` to refresh status from existing code.');
+      return;
+    } catch {}
+
+    const artifactsDirs = [
+      path.join(dir, 'artifacts', 'stories'),
+      path.join(dir, 'artifacts', 'docs'),
+      path.join(dir, 'artifacts', 'history'),
+    ];
+
+    for (const d of artifactsDirs) {
+      await fs.mkdir(d, { recursive: true });
+    }
+
+    const projectName = path.basename(this.cwd);
+
+    const statusYaml = `# BMAD Status — ${projectName}
+# This file is the single source of truth for project state.
+
+project: ${projectName}
+phase: planning
+progress: 0
+next_action: "Create a PRD with bmad plan prd"
+
+phases:
+  - name: planning
+    status: in_progress
+  - name: development
+    status: upcoming
+  - name: testing
+    status: upcoming
+  - name: release
+    status: upcoming
+
+artifacts: {}
+
+sprints: []
+`;
+
+    const configYaml = `# BMAD Config — ${projectName}
+
+name: ${projectName}
+created: "${new Date().toISOString()}"
+stack: []
+`;
+
+    await fs.writeFile(path.join(dir, 'status.yaml'), statusYaml, 'utf8');
+    await fs.writeFile(path.join(dir, 'config.yaml'), configYaml, 'utf8');
+
+    this.log('init', `created bmad/ structure at ${path.relative(this.cwd, dir)}/`);
+    console.log('  - status.yaml (project state)');
+    console.log('  - config.yaml (project settings)');
+    console.log('  - artifacts/ (output directory)');
+    console.log('\nNext step: bmad plan prd');
   }
 
-  // ── Commands ──────────────────────────────────────────────────────────────
+  /**
+   * analyze — scan project and generate/update status.yaml
+   */
+  async analyze(bmadDirOverride) {
+    const dir = this.bmadDir(bmadDirOverride);
+    const info = await this.analyzeProject();
+
+    await fs.mkdir(path.join(dir, 'artifacts'), { recursive: true });
+
+    // Determine phase heuristically
+    let phase = 'planning';
+    let progress = 0;
+    let nextAction = 'Create a PRD with bmad plan prd';
+
+    if (info.hasSrc) {
+      phase = 'development';
+      progress = 30;
+      nextAction = 'Review code and create sprint with bmad sprint';
+    }
+    if (info.hasTests) {
+      progress = 50;
+      nextAction = 'Run tests with bmad test unit';
+    }
+
+    // Check for existing artifacts
+    const hasArtifacts = {};
+    for (const name of ['prd.md', 'architecture.md', 'tech-spec.md']) {
+      try {
+        await fs.access(path.join(dir, 'artifacts', name));
+        hasArtifacts[name.replace('.md', '')] = 'done';
+      } catch {
+        hasArtifacts[name.replace('.md', '')] = 'missing';
+      }
+    }
+
+    const projectName = info.projectName || path.basename(this.cwd);
+
+    const statusYaml = `# BMAD Status — ${projectName}
+# Auto-generated by bmad analyze
+
+project: ${projectName}
+phase: ${phase}
+progress: ${progress}
+next_action: "${nextAction}"
+
+detected:
+  languages: [${Array.from(info.languages).map(l => `"${l}"`).join(', ')}]
+  has_package_json: ${info.hasPackageJson}
+  has_requirements_txt: ${info.hasRequirements}
+  has_src: ${info.hasSrc}
+  has_tests: ${info.hasTests}
+  install_command: "${info.installCommand || 'N/A'}"
+  run_command: "${info.runCommand || 'N/A'}"
+  test_command: "${info.testCommand || 'N/A'}"
+  top_dependencies: [${info.dependencies.slice(0, 8).map(d => `"${d}"`).join(', ')}]
+
+phases:
+  - name: planning
+    status: ${phase === 'planning' ? 'in_progress' : 'done'}
+  - name: development
+    status: ${phase === 'development' ? 'in_progress' : 'upcoming'}
+  - name: testing
+    status: upcoming
+  - name: release
+    status: upcoming
+
+artifacts:
+${Object.entries(hasArtifacts).map(([k, v]) => `  ${k}: ${v}`).join('\n')}
+
+sprints: []
+`;
+
+    await fs.writeFile(path.join(dir, 'status.yaml'), statusYaml, 'utf8');
+    this.log('analyze', `wrote status.yaml for "${projectName}"`);
+    console.log(`  Phase: ${phase} | Progress: ${progress}%`);
+    console.log(`  Languages: ${Array.from(info.languages).join(', ') || 'unknown'}`);
+    console.log(`  Next: ${nextAction}`);
+  }
+
+  /**
+   * status — read and display status.yaml
+   */
+  async status(bmadDirOverride) {
+    const YAML = await this.loadYaml();
+    const dir = this.bmadDir(bmadDirOverride);
+    const statusPath = path.join(dir, 'status.yaml');
+
+    let content;
+    try {
+      content = await fs.readFile(statusPath, 'utf8');
+    } catch {
+      this.err('status', `No status.yaml found at ${statusPath}`);
+      console.log('Run `bmad init` or `bmad analyze` first.');
+      process.exit(1);
+    }
+
+    const data = YAML.load(content);
+    const phase = this.parsePhase(content, YAML);
+    const progress = this.parseProgress(content, YAML);
+    const nextAction = this.parseNextAction(content, YAML);
+    const bugs = this.parseQaBugs(content, YAML);
+
+    console.log(`\n[bmad] Project: ${data?.project || path.basename(this.cwd)}`);
+    console.log(`  Phase:    ${phase}`);
+    console.log(`  Progress: ${progress != null ? progress + '%' : 'unknown'}`);
+    if (nextAction) console.log(`  Next:     ${nextAction}`);
+    if (bugs.length) console.log(`  Bugs:     ${bugs.join(', ')}`);
+
+    // Show artifacts summary
+    if (data?.artifacts && typeof data.artifacts === 'object') {
+      const entries = Object.entries(data.artifacts).filter(([, v]) => v && v !== 'missing');
+      if (entries.length) {
+        console.log(`  Artifacts: ${entries.map(([k, v]) => `${k}(${v})`).join(', ')}`);
+      }
+    }
+
+    // Show sprints summary
+    if (data?.sprints?.length) {
+      console.log(`  Sprints:  ${data.sprints.length} defined`);
+    }
+
+    console.log('');
+  }
+
+  /**
+   * next — show the next recommended action from status.yaml
+   */
+  async next(bmadDirOverride) {
+    const YAML = await this.loadYaml();
+    const dir = this.bmadDir(bmadDirOverride);
+    const statusPath = path.join(dir, 'status.yaml');
+
+    let content;
+    try {
+      content = await fs.readFile(statusPath, 'utf8');
+    } catch {
+      this.err('next', `No status.yaml found. Run bmad init first.`);
+      process.exit(1);
+    }
+
+    const nextAction = this.parseNextAction(content, YAML);
+    const phase = this.parsePhase(content, YAML);
+    const progress = this.parseProgress(content, YAML);
+
+    console.log(`\n[bmad] Phase: ${phase} | Progress: ${progress != null ? progress + '%' : '?'}`);
+    if (nextAction) {
+      console.log(`  Next action: ${nextAction}`);
+    } else {
+      console.log(`  No explicit next action defined in status.yaml.`);
+      console.log(`  Suggestion: run bmad status for full overview.`);
+    }
+    console.log('');
+  }
 
   /**
    * install — install required npm dependencies
@@ -195,21 +425,20 @@ class Bmad {
     this.log('install', 'installing dependencies');
     for (const pkg of ['js-yaml']) {
       this.log('install', `installing ${pkg}...`);
-      const scriptDir = path.dirname(import.meta.url.replace('file:///', ''));
-      // Prefer installing into the skill's scripts directory so require() resolves from here.
       let res = spawnSync('npm', ['install', pkg, '--no-audit', '--no-fund'], {
         stdio: 'inherit',
-        cwd: scriptDir,
+        cwd: __dirname,
+        shell: true,
       });
       if (res.status !== 0) {
-        this.err('install', `failed to install ${pkg} into ${scriptDir}; attempting project root fallback`);
-        // Fallback: try installing into the caller's cwd (project root)
+        this.err('install', `failed in ${__dirname}; trying project root`);
         res = spawnSync('npm', ['install', pkg, '--no-audit', '--no-fund'], {
           stdio: 'inherit',
           cwd: this.cwd,
+          shell: true,
         });
         if (res.status !== 0) {
-          this.err('install', `failed to install ${pkg} in both scriptDir and project root`);
+          this.err('install', `failed to install ${pkg}`);
           process.exit(res.status || 1);
         }
       }
@@ -219,39 +448,26 @@ class Bmad {
 
   /**
    * repair — ensure the script environment is healthy
-   *
-   * runs the installer and then attempts to load the yaml library,
-   * exiting with a nonzero status if anything is still missing.
    */
   async repair() {
     this.log('repair', 'running environment repair');
 
-    // warn if there is no package.json in cwd, since npm install will behave
-    // differently in that situation. The user is expected to invoke this from
-    // their project root where BMAD is used.
     try {
-      const pkgPath = path.join(this.cwd, 'package.json');
-      await fs.access(pkgPath);
+      await fs.access(path.join(this.cwd, 'package.json'));
     } catch {
-      this.err(
-        'repair',
-        'no package.json found in current directory – run this from your project root'
-      );
+      this.err('repair', 'no package.json in cwd — run from project root');
     }
 
-    // If js-yaml is already resolvable from the script context, skip install.
     try {
       const require = createRequire(import.meta.url);
       require('js-yaml');
-      this.log('repair', 'yaml dependency is present (skipping install)');
+      this.log('repair', 'yaml dependency present (skipping install)');
     } catch {
-      // Not present where the script resolves modules — attempt install.
       await this.install();
-      // attempt to require yaml just to validate
       try {
         await this.loadYaml();
-        this.log('repair', 'yaml dependency is present');
-      } catch (err) {
+        this.log('repair', 'yaml dependency installed successfully');
+      } catch {
         this.err('repair', 'yaml check failed');
         process.exit(1);
       }
@@ -261,10 +477,10 @@ class Bmad {
   }
 
   /**
-   * snapshot [bmadDir] — save a timestamped copy of status.yaml
+   * snapshot — save a timestamped copy of status.yaml
    */
-  async snapshot(bmadDir) {
-    const dir = bmadDir ? path.resolve(bmadDir) : path.join(this.cwd, 'bmad');
+  async snapshot(bmadDirOverride) {
+    const dir = this.bmadDir(bmadDirOverride);
     const statusPath = path.join(dir, 'status.yaml');
     const historyDir = path.join(dir, 'artifacts', 'history');
 
@@ -295,25 +511,23 @@ class Bmad {
     ].join('\n');
 
     await fs.writeFile(outPath, md, 'utf8');
-    this.log('snapshot', 'saved →', path.relative(this.cwd, outPath));
+    this.log('snapshot', 'saved ->', path.relative(this.cwd, outPath));
   }
 
   /**
-   * connector [bmadDir] [--rebuild] — generate bmad/artifacts/connector.yml
+   * connector — generate bmad/artifacts/connector.yml
    */
-  async connector(bmadDir) {
+  async connector(bmadDirOverride) {
     const YAML = await this.loadYaml();
-    const dir = bmadDir ? path.resolve(bmadDir) : path.join(this.cwd, 'bmad');
+    const dir = this.bmadDir(bmadDirOverride);
     const artifactsDir = path.join(dir, 'artifacts');
     const outPath = path.join(artifactsDir, 'connector.yml');
 
-    // Read config + status
     let config = {};
     let status = {};
     try { config = YAML.load(await fs.readFile(path.join(dir, 'config.yaml'), 'utf8')) || {}; } catch {}
     try { status = YAML.load(await fs.readFile(path.join(dir, 'status.yaml'), 'utf8')) || {}; } catch {}
 
-    // Scan actual artifact entries
     const scan = async (subdir, ext = '.md') => {
       try {
         const files = await fs.readdir(path.join(artifactsDir, subdir));
@@ -321,73 +535,58 @@ class Bmad {
       } catch { return []; }
     };
 
-    const [sprints, stories, tests, campaigns, discussions, history] = await Promise.all([
-      scan('sprints'), scan('stories'), scan('tests'), scan('campaigns'), scan('discussions'),
+    const [stories, history] = await Promise.all([
+      scan('stories'),
       scan('history', '.md'),
     ]);
 
     const connector = {
       meta: {
         generated: new Date().toISOString(),
-        bmad_version: '3.2.0',
+        bmad_version: '4.0.0',
         project: config.name || path.basename(this.cwd),
         root: 'bmad/',
       },
       dictionary: {
         keywords: {
-          story:     'Atomic dev task. ID pattern: S{sprint}-{seq:02d}. Role: developer.',
-          sprint:    'Time-boxed work batch. ID pattern: sprint-{N}. Role: scrum-master.',
-          prd:       'Product Requirements Document. Role: pm.',
-          arch:      'Architecture document. Role: architect.',
-          audit:     'Codebase analysis report. Role: analyst.',
-          dashboard: 'Live project status view. Auto-generated. Role: orchestrator.',
-          connector: 'This file. Machine-readable project manifest. Role: orchestrator.',
+          story:     'Atomic dev task. ID pattern: S{sprint}-{seq:02d}.',
+          sprint:    'Time-boxed work batch. ID pattern: sprint-{N}.',
+          prd:       'Product Requirements Document.',
+          arch:      'Architecture document.',
+          audit:     'Codebase analysis report.',
+          connector: 'This file. Machine-readable project manifest.',
         },
         rules: [
-          'All file writes must be followed by a dashboard update.',
           'Story IDs follow pattern S{sprint_number}-{sequence:02d} (e.g. S1-03).',
-          'Sprint files are named sprint-{N}.md (e.g. sprint-2.md).',
-          'Audit baselines are named audit-baseline-{YYYY-MM-DD}.md.',
+          'Sprint files are named sprint-{N}.md.',
           'All text artifacts are written in English.',
           'status.yaml is the single source of truth for project phase state.',
-          'connector.yml is regenerated automatically on every dashboard update.',
         ],
         naming: {
-          story:    'S{sprint}-{seq:02d}',
-          sprint:   'sprint-{N}',
-          audit:    'audit-baseline-{YYYY-MM-DD}',
-          campaign: '{slug}',
-          history:  'status-{YYYYMMDDTHHmmss}',
+          story:   'S{sprint}-{seq:02d}',
+          sprint:  'sprint-{N}',
+          audit:   'audit-{YYYY-MM-DD}',
+          history: 'status-{YYYYMMDDTHHmmss}',
         },
       },
       architecture: [
         {
           path: 'bmad/',
-          role: 'orchestrator',
           description: 'BMAD project root',
           children: [
-            { path: 'config.yaml',   type: 'file', description: 'Project metadata (name, stack, team)' },
-            { path: 'status.yaml',   type: 'file', description: 'Current phase, artifacts state, sprint/backlog progress' },
-            { path: 'dashboard.md',  type: 'file', description: 'Interactive project dashboard (auto-generated)' },
+            { path: 'config.yaml',  type: 'file', description: 'Project metadata' },
+            { path: 'status.yaml',  type: 'file', description: 'Current phase and progress' },
             {
               path: 'artifacts/',
               type: 'dir',
               description: 'All generated project artifacts',
               children: [
-                { path: 'connector.yml',         type: 'file', role: 'orchestrator', description: 'Auto-discovery manifest' },
-                { path: 'product-brief.md',      type: 'file', role: 'analyst',      status: status?.artifacts?.['product-brief'] ?? 'unknown' },
-                { path: 'prd.md',                type: 'file', role: 'pm',           status: status?.artifacts?.prd ?? 'unknown' },
-                { path: 'tech-spec.md',          type: 'file', role: 'pm',           status: status?.artifacts?.['tech-spec'] ?? 'unknown' },
-                { path: 'architecture.md',       type: 'file', role: 'architect',    status: status?.artifacts?.architecture ?? 'unknown' },
-                { path: 'positioning.md',        type: 'file', role: 'marketing',    status: status?.artifacts?.positioning ?? 'unknown' },
-                { path: 'marketing-strategy.md', type: 'file', role: 'marketing',    status: status?.artifacts?.['marketing-strategy'] ?? 'unknown' },
-                { path: 'launch-plan.md',        type: 'file', role: 'marketing',    status: status?.artifacts?.['launch-plan'] ?? 'unknown' },
-                { path: 'sprints/',    type: 'dir', role: 'scrum-master', pattern: 'sprint-{N}.md',     entries: sprints },
-                { path: 'stories/',   type: 'dir', role: 'developer',    pattern: 'S{sprint}-{seq}.md', entries: stories },
-                { path: 'tests/',     type: 'dir', role: 'tester',       pattern: '{story-id}-test-plan.md', entries: tests },
-                { path: 'campaigns/', type: 'dir', role: 'marketing',    pattern: '{slug}.md',          entries: campaigns },
-                { path: 'discussions/', type: 'dir', role: 'orchestrator', pattern: '{topic}-{YYYY-MM-DD}.md', entries: discussions },
-                { path: 'history/',   type: 'dir', role: 'orchestrator', pattern: 'status-{YYYYMMDDTHHmmss}.md', entries: history },
+                { path: 'connector.yml',    type: 'file', description: 'Auto-discovery manifest' },
+                { path: 'prd.md',           type: 'file', status: status?.artifacts?.prd ?? 'unknown' },
+                { path: 'tech-spec.md',     type: 'file', status: status?.artifacts?.['tech-spec'] ?? 'unknown' },
+                { path: 'architecture.md',  type: 'file', status: status?.artifacts?.architecture ?? 'unknown' },
+                { path: 'stories/',  type: 'dir', pattern: 'S{sprint}-{seq}.md', entries: stories },
+                { path: 'history/',  type: 'dir', pattern: 'status-{timestamp}.md', entries: history },
               ],
             },
           ],
@@ -403,21 +602,15 @@ class Bmad {
       '',
     ].join('\n');
     await fs.writeFile(outPath, header + YAML.dump(connector, { lineWidth: 120 }), 'utf8');
-    this.log('connector', 'written →', path.relative(this.cwd, outPath));
+    this.log('connector', 'written ->', path.relative(this.cwd, outPath));
   }
 
   /**
-   * generateReadme — create or update README.md from templates
-   * level: 'simple' | 'intermediate' | 'advanced'
+   * generateReadme — create README template in project's bmad/artifacts/docs/
    */
-  async generateReadme(level = 'simple') {
+  async generateReadme() {
     try {
-      const scriptDir = path.dirname(import.meta.url.replace('file:///', ''));
-      // By default generate a single README containing three progressive
-      // sections: Simple → Intermediate → Advanced. Each template is
-      // placed under a named subsection. If a --level was provided it will
-      // still be accepted but we include all 3 sections in the same document.
-      const templatesDir = path.join(scriptDir, '..', 'references', 'readme-templates');
+      const templatesDir = path.join(__dirname, '..', 'references', 'readme-templates');
       const files = {
         simple: path.join(templatesDir, 'README.simple.md'),
         intermediate: path.join(templatesDir, 'README.intermediate.md'),
@@ -427,22 +620,16 @@ class Bmad {
       const projectName = path.basename(this.cwd);
 
       const readTemplate = async (p) => {
-        try {
-          return await fs.readFile(p, 'utf8');
-        } catch {
-          return '';
-        }
+        try { return await fs.readFile(p, 'utf8'); } catch { return ''; }
       };
 
       const tplSimple = await readTemplate(files.simple);
       const tplInter = await readTemplate(files.intermediate);
       const tplAdv = await readTemplate(files.advanced);
 
-      // Helper: drop top-level title if present and replace placeholders
       const normalize = (tpl) => {
         let s = tpl || '';
         s = s.replace(/{{project_name}}/g, projectName).replace(/{{project_dir}}/g, this.cwd);
-        // remove first line if it's a level-1 title
         s = s.replace(/^#\s.*\r?\n/, '');
         return s.trim();
       };
@@ -451,14 +638,15 @@ class Bmad {
       const bodyInter = normalize(tplInter);
       const bodyAdv = normalize(tplAdv);
 
-      // Write the combined template to the skill's references folder so the
-      // skill can use it as the canonical readme-template. Do NOT overwrite
-      // the user's project README by default.
-      const templateOut = path.join(path.dirname(import.meta.url.replace('file:///', '')), '..', 'references', 'readme-template.md');
+      // Write to project's bmad/artifacts/docs/, NOT back into the skill folder
+      const outDir = path.join(this.cwd, 'bmad', 'artifacts', 'docs');
+      await fs.mkdir(outDir, { recursive: true });
+      const outPath = path.join(outDir, 'README.template.md');
+
       const parts = [
-        `# {{project_name}}`,
+        `# ${projectName}`,
         '',
-        `> Auto-generated README template — includes three progressive levels: Simple → Intermediate → Advanced.`,
+        `> Auto-generated README template — includes three progressive levels: Simple, Intermediate, Advanced.`,
         '',
         '## Simple',
         '',
@@ -481,15 +669,17 @@ class Bmad {
         'Generated by BMAD',
       ].join('\n');
 
-      await fs.writeFile(templateOut, parts, 'utf8');
-      this.log('readme', `wrote template → ${path.relative(this.cwd, templateOut)}`);
+      await fs.writeFile(outPath, parts, 'utf8');
+      this.log('readme', `wrote template -> ${path.relative(this.cwd, outPath)}`);
     } catch (err) {
       this.err('readme', 'failed to generate README:', err.message);
       throw err;
     }
   }
 
-  // Analyze the current project to collect basic facts used to pre-fill README
+  /**
+   * analyzeProject — collect basic project facts
+   */
   async analyzeProject() {
     const info = {
       projectName: path.basename(this.cwd),
@@ -506,13 +696,11 @@ class Bmad {
       description: null,
     };
 
-    // package.json
     try {
-      const pkgPath = path.join(this.cwd, 'package.json');
-      const pj = JSON.parse(await fs.readFile(pkgPath, 'utf8'));
+      const pj = JSON.parse(await fs.readFile(path.join(this.cwd, 'package.json'), 'utf8'));
       info.hasPackageJson = true;
       info.languages.add('JavaScript/Node');
-      info.description = info.description || pj.description || null;
+      info.description = pj.description || null;
       info.packageScripts = pj.scripts || {};
       if (pj.dependencies) info.dependencies = Object.keys(pj.dependencies).slice(0, 10);
       if (info.packageScripts.start) info.runCommand = 'npm start';
@@ -521,10 +709,8 @@ class Bmad {
       info.installCommand = 'npm install';
     } catch {}
 
-    // requirements.txt
     try {
-      const reqPath = path.join(this.cwd, 'requirements.txt');
-      const req = await fs.readFile(reqPath, 'utf8');
+      const req = await fs.readFile(path.join(this.cwd, 'requirements.txt'), 'utf8');
       info.hasRequirements = true;
       info.languages.add('Python');
       info.installCommand = info.installCommand || 'pip install -r requirements.txt';
@@ -532,33 +718,30 @@ class Bmad {
       info.dependencies = info.dependencies.length ? info.dependencies.concat(deps) : deps;
     } catch {}
 
-    // src/ and tests/
     try { await fs.access(path.join(this.cwd, 'src')); info.hasSrc = true; info.languages.add('Source files'); } catch {}
     try { await fs.access(path.join(this.cwd, 'tests')); info.hasTests = true; } catch {}
     try { await fs.access(path.join(this.cwd, 'test')); info.hasTests = true; } catch {}
 
-    // test command heuristics
     if (!info.testCommand) {
-      if (info.packageScripts && info.packageScripts.test) info.testCommand = 'npm test';
+      if (info.packageScripts?.test) info.testCommand = 'npm test';
       else if (info.hasTests) info.testCommand = 'run your test suite (see tests/)';
     }
 
     return info;
   }
 
-  // Fill the canonical readme-template.md with analysis and write a draft to artifacts/docs/
-  async fillReadmeDraft(level = 'simple') {
+  /**
+   * fillReadmeDraft — fill template with project analysis
+   */
+  async fillReadmeDraft() {
     try {
-      const scriptDir = path.dirname(import.meta.url.replace('file:///', ''));
-      const templatePath = path.join(this.cwd, 'references', 'readme-template.md');
-      // fallback to skill's template if project doesn't have one
-      const fallback = path.join(scriptDir, '..', 'references', 'readme-template.md');
+      const templatePath = path.join(this.cwd, 'bmad', 'artifacts', 'docs', 'README.template.md');
+      const fallback = path.join(__dirname, '..', 'references', 'readme-template.md');
       let tpl;
       try { tpl = await fs.readFile(templatePath, 'utf8'); } catch { tpl = await fs.readFile(fallback, 'utf8'); }
 
       const info = await this.analyzeProject();
 
-      // Basic replacements
       tpl = tpl.replace(/{{project_name}}/g, info.projectName || path.basename(this.cwd));
       tpl = tpl.replace(/{{project_dir}}/g, this.cwd);
 
@@ -570,13 +753,9 @@ class Bmad {
       tpl = tpl.replace(/<run-command>/g, runCmd);
       tpl = tpl.replace(/<example-command>/g, exampleCmd);
 
-      // Append analysis summary at end of file
       const analysis = [
-        '',
-        '---',
-        '',
-        '## Auto Analysis',
-        '',
+        '', '---', '',
+        '## Auto Analysis', '',
         `- Detected languages: ${Array.from(info.languages).join(', ') || 'unknown'}`,
         `- Has package.json: ${info.hasPackageJson}`,
         `- Has requirements.txt: ${info.hasRequirements}`,
@@ -587,16 +766,15 @@ class Bmad {
         `- Test command: ${info.testCommand || 'none detected'}`,
       ];
 
-      if (info.dependencies && info.dependencies.length) analysis.push(`- Top dependencies: ${info.dependencies.slice(0,10).join(', ')}`);
+      if (info.dependencies.length) analysis.push(`- Top dependencies: ${info.dependencies.slice(0, 10).join(', ')}`);
       if (info.description) analysis.push('', `## Project Description`, '', info.description);
 
       const out = tpl + '\n' + analysis.join('\n');
-
       const outDir = path.join(this.cwd, 'bmad', 'artifacts', 'docs');
       await fs.mkdir(outDir, { recursive: true });
       const outPath = path.join(outDir, 'README.draft.md');
       await fs.writeFile(outPath, out, 'utf8');
-      this.log('readme', `wrote draft → ${path.relative(this.cwd, outPath)}`);
+      this.log('readme', `wrote draft -> ${path.relative(this.cwd, outPath)}`);
       return outPath;
     } catch (err) {
       this.err('readme', 'failed to fill draft:', err.message);
@@ -607,72 +785,53 @@ class Bmad {
 
 // ── CLI entry point ─────────────────────────────────────────────────────────
 
-// Robust CLI parsing — accept global flags anywhere (e.g.,  --delay <s>)
-// and pass an options object to command handlers.
 const raw = process.argv.slice(2);
 const cmd = raw[0];
 const args = raw.slice(1);
-const opts = { delay: null };
-
 
 const bmad = new Bmad();
 
 const commands = {
-  install:   (a,o) => bmad.install(a,o),
-  repair:    (a,o) => bmad.repair(a,o),
-  snapshot:  (a,o) => bmad.snapshot(a[0]),
-  connector: (a,o) => bmad.connector(a.find(x => !x.startsWith('--'))),
-  wait:      (a,o) => bmad.wait(a),
-  delay:     (a,o) => bmad.wait(a),  // Alias
-  readme:    (a,o) => {
-    // parse --level
-    let level = 'simple';
-    let fill = false;
-    for (let i = 0; i < a.length; i++) {
-      if (a[i] === '--level' && a[i+1]) { level = a[i+1]; i++; }
-      else if (a[i].startsWith('--level=')) { level = a[i].split('=')[1]; }
-      else if (a[i] === '--fill') { fill = true; }
-    }
-    if (fill) return bmad.fillReadmeDraft(level);
-    return bmad.generateReadme(level);
+  init:      (a) => bmad.init(a[0]),
+  analyze:   (a) => bmad.analyze(a[0]),
+  status:    (a) => bmad.status(a[0]),
+  next:      (a) => bmad.next(a[0]),
+  install:   () => bmad.install(),
+  repair:    () => bmad.repair(),
+  snapshot:  (a) => bmad.snapshot(a[0]),
+  connector: (a) => bmad.connector(a.find(x => !x.startsWith('--'))),
+  wait:      (a) => bmad.wait(a),
+  delay:     (a) => bmad.wait(a),
+  readme:    (a) => {
+    const fill = a.includes('--fill');
+    if (fill) return bmad.fillReadmeDraft();
+    return bmad.generateReadme();
   },
-  sprint:    async (a,o) => {
-    // support: sprint story [--id <id>] [--level <level>]
+  sprint: async (a) => {
     if (a[0] === 'story') {
       let id = `story-${Date.now()}`;
-      let level = 'simple';
       for (let i = 1; i < a.length; i++) {
-        if (a[i] === '--id' && a[i+1]) { id = a[i+1]; i++; }
-        else if (a[i] === '--level' && a[i+1]) { level = a[i+1]; i++; }
-        else if (a[i].startsWith('--level=')) { level = a[i].split('=')[1]; }
+        if (a[i] === '--id' && a[i + 1]) { id = a[i + 1]; i++; }
       }
       const dir = path.join(bmad.cwd, 'bmad', 'artifacts', 'stories');
       await fs.mkdir(dir, { recursive: true });
       const out = path.join(dir, `${id}.md`);
       const content = [`# Story ${id}`, '', `Generated: ${new Date().toISOString()}`, '', 'Summary: TODO', ''].join('\n');
       await fs.writeFile(out, content, 'utf8');
-      bmad.log('sprint', `created story → ${path.relative(bmad.cwd, out)}`);
-      await bmad.generateReadme(level);
+      bmad.log('sprint', `created story -> ${path.relative(bmad.cwd, out)}`);
       return;
     }
     bmad.log('sprint', 'no-op (use `sprint story`)');
   },
-  dev: async (a,o) => {
-    // support: dev story <id> [--level <level>]
+  dev: async (a) => {
     if (a[0] === 'story' && a[1]) {
       const id = a[1];
-      let level = 'simple';
-      for (let i = 2; i < a.length; i++) {
-        if (a[i] === '--level' && a[i+1]) { level = a[i+1]; i++; }
-        else if (a[i].startsWith('--level=')) { level = a[i].split('=')[1]; }
-      }
       const dir = path.join(bmad.cwd, 'bmad', 'artifacts', 'stories');
       await fs.mkdir(dir, { recursive: true });
-      const out = path.join(dir, `${id}.md`);
+      const outFile = path.join(dir, `${id}.md`);
       const content = [`# Story ${id}`, '', `Implemented: ${new Date().toISOString()}`, '', 'Changes: TODO', 'Tests: TODO', ''].join('\n');
-      await fs.writeFile(out, content, 'utf8');
-      bmad.log('dev', `wrote story → ${path.relative(bmad.cwd, out)}`);
-      await bmad.generateReadme(level);
+      await fs.writeFile(outFile, content, 'utf8');
+      bmad.log('dev', `wrote story -> ${path.relative(bmad.cwd, outFile)}`);
       return;
     }
     bmad.log('dev', 'no-op (use `dev story <id>`)');
@@ -684,4 +843,4 @@ if (!cmd || !commands[cmd]) {
   process.exit(1);
 }
 
-commands[cmd](args, opts).catch(e => { console.error(e); process.exit(1); });
+commands[cmd](args).catch(e => { console.error(e); process.exit(1); });
