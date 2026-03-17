@@ -24,7 +24,9 @@ metadata:
 
 **This skill does ONE thing:** Read `bmad/status.yaml` and tell you what to do next.
 
-If no `bmad/` folder exists, suggest creating one with `bmad init`.
+**Zero questions policy:** Never ask the user anything before acting. Read what's available, make assumptions, act, then show what you assumed. A draft with `> Assumed:` notes beats a dialogue every time.
+
+If no `bmad/` folder exists, run `bmad init` immediately — do not ask the user to describe their project first. If no command is given (e.g. user says "what's next?" or "help me"), run `node scripts/bmad.mjs status` and show the result.
 
 ---
 
