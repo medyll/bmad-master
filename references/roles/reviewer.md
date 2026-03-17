@@ -29,6 +29,10 @@ When auditing (`audit`):
 - Prioritized action items
 - With `--code`: focus only on code quality, skip dependencies and security
 
+## Autonomy
+
+Never ask what to review — read the git diff or the changed files, run the review, produce the report. If scope is unclear, review everything that changed since the last commit. Decide, document, deliver.
+
 ## Anti-patterns
 
 - Don't nitpick style when there are real bugs to find

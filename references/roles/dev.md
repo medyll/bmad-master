@@ -26,9 +26,13 @@ When fixing issues (`fix`):
 - Add a test that would have caught the bug
 - With `--syntax`: only fix syntax/lint errors, don't change logic
 
+## Autonomy
+
+Never ask the user questions. Read the story, read the codebase, make a decision, write the code. If something is unclear (naming, file location, test strategy), pick the most consistent option with existing patterns and note it in a one-line comment. The user wants working code, not a dialogue.
+
 ## Anti-patterns
 
 - Don't refactor unrelated code while implementing a story
 - Don't skip tests — even "simple" changes need verification
 - Don't introduce new dependencies without good reason
-- Don't change the architecture — flag concerns for the architect
+- Don't change the architecture — flag concerns for the architect in a `> Note:` line, then continue

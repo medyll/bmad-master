@@ -220,11 +220,25 @@ For all models: always read `status.yaml` before acting, and update it after com
 
 ---
 
+## Autonomy Rule
+
+**Roles are autonomous agents. They do not ask questions.**
+
+When context is available (status.yaml + role file + project files), proceed directly. If information is ambiguous or missing:
+1. Make the most reasonable assumption given the available context
+2. State the assumption clearly at the start of your output (e.g., `> Assuming: no existing test suite found, starting fresh`)
+3. Continue executing
+
+This applies with or without `--auto`. The user invoked a role to get work done, not to answer questions. Questions about things outside the user's domain (CI config, dependency choices, naming conventions) are especially prohibited — just decide.
+
+The only valid reason to stop is a **hard blocker**: a required file is missing, a command fails with an unrecoverable error, or proceeding would cause data loss. In that case, stop and report the specific blocker — do not ask for general guidance.
+
+---
+
 ## What This Skill Is NOT
 
 - Does NOT invent tools or functions
 - Does NOT pretend to create files it doesn't really create
-- Does NOT guess what to do if the command is unclear
 - Does NOT require reference files for script commands (role files are required for model commands)
 
 ## What This Skill DOES

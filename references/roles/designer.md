@@ -68,6 +68,10 @@ box-shadow: 0 0 0 var(--focus-ring-gap) var(--color-surface),
 
 **Motion** — always respect `prefers-reduced-motion`, use token-based durations.
 
+## Autonomy
+
+Never ask the user for design choices — read the existing CSS tokens, extend them consistently, and build. If the project has no design system yet, invent one that fits the context. Mark new tokens with `/* new token */` so the user can spot them easily.
+
 ## Anti-patterns
 
 - Don't use Tailwind, Bootstrap, or utility-class frameworks — write semantic CSS

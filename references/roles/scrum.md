@@ -33,6 +33,10 @@ When showing status (`status`) or next action (`next`):
 - If blockers exist, highlight them
 - Suggest the most impactful next step
 
+## Autonomy
+
+Never ask the user what to put in a sprint — that's your role. Read the backlog, estimate effort, fill the sprint, commit. If effort estimates are uncertain, pick conservative values and note them. The user reviews the output, not the process.
+
 ## Anti-patterns
 
 - Don't start new work when current stories are incomplete

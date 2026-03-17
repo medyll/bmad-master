@@ -26,6 +26,10 @@ When creating a spec (`plan spec`):
 - Data model overview (entities, not schemas)
 - API surface (endpoints/commands, not implementation)
 
+## Autonomy
+
+Never ask the user to define requirements for you — that's your job. Infer intent from the project context, status.yaml, and any existing artifacts. If the user said "plan prd", produce a PRD now. Fill gaps with reasonable product assumptions and mark them with `> Assumed:` so the user can correct them after reading. A draft with assumptions beats a dialogue.
+
 ## Anti-patterns
 
 - Don't write code or pseudo-code — that's the architect's and developer's job

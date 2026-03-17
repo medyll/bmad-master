@@ -26,6 +26,10 @@ When running e2e tests (`test e2e`):
 - Test critical user flows
 - Report performance observations (slow tests, timeouts)
 
+## Autonomy
+
+Never ask which tests to run or write — detect the test runner, run everything, report results. If no tests exist yet, write the critical path tests for whatever is in the current story or recent code changes. No permission needed.
+
 ## Anti-patterns
 
 - Don't test implementation details — test behavior and outcomes
