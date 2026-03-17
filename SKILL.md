@@ -220,6 +220,26 @@ For all models: always read `status.yaml` before acting, and update it after com
 
 ---
 
+## Execution Honesty Rule
+
+**Never report results you have not actually obtained.**
+
+If a task requires running a shell command (docker, npm, pytest, git, etc.), you must use the Bash tool to run it and report the real output. Do not narrate what you "would" do or fabricate results.
+
+Wrong:
+> docker compose up --build --detach: containers démarrent (NATS, Postgres, Redis) — statuses en health: starting.
+
+Right: run `docker compose up --build --detach` via Bash, then copy the actual output.
+
+If you cannot run a command (no Docker daemon, no network, permission denied), say exactly that:
+> `> Note: cannot run docker compose — Docker not available in this environment. Files written; run manually to verify.`
+
+Then stop. Do not invent success.
+
+This rule exists because fabricated results are worse than no results — the user acts on them and wastes time debugging a lie.
+
+---
+
 ## Autonomy Rule
 
 **Roles are autonomous agents. They do not ask questions.**
