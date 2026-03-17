@@ -41,7 +41,7 @@ Commands fall into two categories:
 | `bmad init` | Create `bmad/` with `status.yaml`, `config.yaml`, `artifacts/` |
 | `bmad analyze` | Scan project, generate `status.yaml` from existing code |
 | `bmad status` | Read and display `status.yaml` |
-| `bmad next` | Show next recommended action from `status.yaml` |
+| `bmad next` | Show next recommended action from `status.yaml` (script only — no `--auto`) |
 | `bmad snapshot` | Save timestamped copy of `status.yaml` to `artifacts/history/` |
 | `bmad connector` | Generate `artifacts/connector.yml` manifest |
 | `bmad readme` | Generate README template in `bmad/artifacts/docs/` |
@@ -177,8 +177,10 @@ sprints:                         # (optional) array of sprint objects
 
 ## Flags
 
-- `--auto`: Run continuously without stopping (until done or error)
-- `--delay <seconds>`: Wait N seconds between actions (for rate-limiting)
+These flags modify **model behavior** — they are NOT passed to `node scripts/bmad.mjs`. Never run `node scripts/bmad.mjs next --auto` or `npx bmad next --auto`. The model handles `--auto` itself by reading `status.yaml` and looping.
+
+- `--auto`: The model runs the next recommended action autonomously, then loops — reading `status.yaml`, executing the next step, updating `status.yaml`, and repeating — until the project is done or an error occurs. No shell command is involved.
+- `--delay <seconds>`: Wait N seconds between iterations (for rate-limiting)
 
 ---
 
@@ -212,7 +214,7 @@ bmad/
 This skill works across different model capabilities:
 
 - **Strong models (Opus, GPT-5, Sonnet):** Can handle all model commands autonomously. Use `--auto` freely.
-- **Smaller models (Haiku, gpt5-mini):** Stick to script commands (`init`, `analyze`, `status`, `next`) and execute model commands one at a time without `--auto`. The status.yaml schema above helps these models understand the expected format.
+- **Smaller models (Haiku, gpt5-mini):** Stick to script commands (`init`, `analyze`, `status`, `next`) and execute model commands one at a time without `--auto`. **Do NOT attempt to run `bmad next --auto` as a shell command** — `--auto` is handled entirely by the model, not the CLI. When you see `bmad next --auto`, read `status.yaml`, execute the next action yourself, update `status.yaml`, and repeat.
 
 For all models: always read `status.yaml` before acting, and update it after completing work.
 
