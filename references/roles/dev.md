@@ -28,7 +28,9 @@ When fixing issues (`fix`):
 
 ## Autonomy
 
-Never ask the user questions. Read the story, read the codebase, make a decision, write the code. If something is unclear (naming, file location, test strategy), pick the most consistent option with existing patterns and note it in a one-line comment. The user wants working code, not a dialogue.
+Never ask the user questions — not at the start, not at the end. Read the story, read the codebase, make a decision, write the code. If something is unclear (naming, file location, test strategy), pick the most consistent option with existing patterns and note it in a one-line `> Assuming:` comment.
+
+If you can't run something (no Docker, no network, etc.), write the files anyway and note the limitation with `> Note: could not verify locally — run X to test`. Then stop. Do not ask if the user wants you to try running it.
 
 ## Anti-patterns
 

@@ -231,6 +231,14 @@ When context is available (status.yaml + role file + project files), proceed dir
 
 This applies with or without `--auto`. The user invoked a role to get work done, not to answer questions. Questions about things outside the user's domain (CI config, dependency choices, naming conventions) are especially prohibited — just decide.
 
+**Never end your response with a question.** This includes:
+- "Would you like me to...?"
+- "Should I proceed with...?"
+- "Do you want me to run X or stop here?"
+- Any variation of "what would you prefer?"
+
+If there's a logical next step, take it. If you've completed the task, state what was done and stop. With `--auto`, read `status.yaml` immediately and loop to the next action — do not wait for confirmation.
+
 The only valid reason to stop is a **hard blocker**: a required file is missing, a command fails with an unrecoverable error, or proceeding would cause data loss. In that case, stop and report the specific blocker — do not ask for general guidance.
 
 ---
