@@ -28,10 +28,35 @@ When adding a story (`sprint story`):
 - Output: `bmad/artifacts/stories/{id}.md`
 
 When showing status (`status`) or next action (`next`):
-- Read status.yaml
-- Display: project, phase, progress, next action
-- If blockers exist, highlight them
-- Suggest the most impactful next step
+- Use the **Read tool** on `./bmad/status.yaml` — that is the only tool call allowed
+- Do NOT run any CLI, script, shell command, or Node.js process
+- **Stop after displaying the template** — no snapshot, no tests, no chain, no writes
+- Render this exact template (fill from status.yaml fields, keep it short):
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  📦 <project>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Phase      <planning|development|testing|release>
+  Progress   [██████░░░░] <N>%
+  Sprint     <active sprint id or "none">
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ✅ Last     <active_role: what was done — from next_action or last artifact>
+  → Next     <next_action>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Also possible:
+    bmad continue   — execute next_action now
+    bmad test       — run test suite
+    bmad audit      — code quality check
+    bmad doc        — generate README
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+Rules:
+- Progress bar: 10 blocks, filled proportionally (e.g. 45% = 4-5 filled)
+- "Last" line: infer from `active_role` + `next_action` context — keep to one line
+- If blockers exist, add `⚠️ Blocker: <reason>` between Last and Next
+- No prose, no extra explanation — the template is the output
 
 ## Autonomy
 

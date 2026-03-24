@@ -7,7 +7,8 @@ description: |-
   Main commands:
   - `bmad init PROJECT_NAME` — Start a new project
   - `bmad continue` — Keep working (implements stories, runs tests, chains automatically)
-  - `bmad status` / `bmad what's next` — See project state
+  - `bmad status` / `bmad what's next` — Display current state (reads status.yaml, no execution)
+  - `bmad analyze` — Rebuild status.yaml from project state (explicit regeneration)
   - `bmad test` — Run tests (unit + e2e)
   - `bmad audit` — Check code quality
   - `bmad doc` — Generate docs/README
@@ -16,7 +17,7 @@ description: |-
 
   Triggers: "bmad", "what's next", "continue", "status", "test", "audit"
   Use whenever you have project work to do. Just say it naturally.
-argument-hint: "init, continue, status, what's next, test, audit, doc"
+argument-hint: "init, continue, status, what's next, analyze, test, audit, doc"
 compatibility:
   - mcp_v2
 user-invocable: true
@@ -34,21 +35,38 @@ metadata:
 
 **IMPORTANT — Working Directory Rule:** All file operations work on the user's **current project directory** (where they ran `bmad continue`), NEVER the skill's internal folder. Do not access `C:\Users\Mydde\.claude\skills\bmad-master\bmad\` — that is the skill's bootstrap template only.
 
+---
+
+### ⚡ SHORT-CIRCUIT: `bmad status` and `bmad what's next`
+
+`status.yaml` is kept up to date automatically throughout the workflow (by every other command). `bmad status` simply reads and displays it — it never rebuilds it.
+
+If the command is **`bmad status`** or **`bmad what's next`**:
+
+1. Use the **Read tool** on `./bmad/status.yaml` — this is the ONLY tool call allowed
+2. Render the status template from scrum.md
+3. **STOP** — no role activation, no chain, no CLI, no shell, no Node.js, no writes
+
+**To rebuild status.yaml from scratch**, the user must explicitly say `bmad analyze`. That is a different command with a different purpose.
+
+Do NOT proceed past this block for `bmad status`. Do NOT enter the Role Activation Checklist.
+
+---
+
 **Use as Orchestrator:** Read `./bmad/status.yaml` from the user's current directory → understand project state → execute task with appropriate role → update status → chain to next action automatically. No waiting for user input between steps. The YAML file is the state machine; follow it.
 
 **Mandatory first step — always:** Check if `./bmad/status.yaml` exists in the current directory (not a parent). If yes, read it. If no, run `bmad init`. This step is not optional and cannot be assumed — it must actually happen.
 
 **Assumption-first approach:** Only use `> Assumed:` for *implementation decisions* (how to build a feature, what test framework to use, etc.). Never assume the state of status.yaml — always read it first. This is the key difference between a productive assumption and stalling.
 
-Action guarantee: every command must produce at least one concrete, verifiable result:
+Action guarantee: every command (except `bmad status`) must produce at least one concrete, verifiable result:
 - `./bmad/status.yaml` was read AND updated (`active_role`, `next_action`, `progress`)
 - A file was written to `./bmad/artifacts/`
 - A code/test change was made in the project
-- A command was run and its real output was shown
 
 **Monorepo rule:** Always use the current working directory. Never walk up to parent directories to find a `bmad/` folder — each package manages its own. If the user is in `packages/idae-machine`, work with `packages/idae-machine/bmad/` only.
 
-If no `./bmad/` folder exists **in the exact cwd**, run `bmad init` immediately — do not ask the user to describe their project first. If `./bmad/` exists but status.yaml lacks Chain Protocol fields (next_command, next_role), run `bmad update` to sync. If no command is given (e.g. user says "help me" or "What is to do now ?"), read `./bmad/status.yaml` from the project directory and show the result
+If no `./bmad/` folder exists **in the exact cwd**, create it with `bmad init` immediately — do not ask the user to describe their project first. If `./bmad/` exists but status.yaml lacks Chain Protocol fields (next_command, next_role), add the missing fields using the Edit tool. If no command is given, use the **Read tool** on `./bmad/status.yaml` and display the status template.
 
 ---
 
@@ -58,7 +76,11 @@ If no `./bmad/` folder exists **in the exact cwd**, run `bmad init` immediately 
 
 **status.yaml update is SILENT and DONE FIRST** — update it before displaying anything to the user. Never list it as a pending step. Never say "I will update status.yaml" — just do it.
 
-**Normal flow (bmad continue):** Execute → update status.yaml → chain to next action. No menu, no choices, no interruptions. Just show:
+**`bmad status` is SHORT-CIRCUITED above** — it never reaches this section. If you are reading this for a `bmad status` command, go back to the SHORT-CIRCUIT block and stop there.
+
+**Writing status.yaml:** Always use the **Edit tool** directly on `./bmad/status.yaml`. Never use shell commands (PowerShell, bash, Node.js) to modify it.
+
+**Normal flow (bmad continue):** Execute → update status.yaml via Edit tool → chain to next action. No menu, no choices, no interruptions. Just show:
 ```
 [DONE: <what you just completed — specific: files created, tests run, results>]
 [NEXT: <next action>]
@@ -113,7 +135,8 @@ These are the only commands you need. BMAD handles everything else automatically
 |---------|-------------|
 | `bmad init <project>` | Create project structure, ready to start |
 | `bmad continue` | Keep working: implement stories, write tests, chain to next step automatically |
-| `bmad status` / `bmad what's next` | Show current project state + next action |
+| `bmad status` / `bmad what's next` | **Display** current state — reads `status.yaml` and shows it. No execution. |
+| `bmad analyze` | **Rebuild** `status.yaml` from scratch by scanning the project. Use when status is stale or missing. |
 | `bmad test` | Run all tests (unit + e2e). Non-critical e2e failures won't block progress |
 | `bmad audit` | Check code quality and surface issues |
 | `bmad doc` | Generate/update project docs and README |
@@ -128,7 +151,6 @@ These script commands run deterministically to manage state. **You never call th
 
 | Internal Command | What it does |
 |---------|-------------|
-| `bmad analyze` | Scan project, generate `status.yaml` from existing code |
 | `bmad snapshot` | Save timestamped copy of `status.yaml` to `artifacts/history/` |
 | `bmad connector` | Generate `artifacts/connector.yml` manifest |
 | `bmad config set/get/unset` | Manage skill configuration overrides |
