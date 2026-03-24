@@ -21,14 +21,23 @@ When running unit tests (`test unit`):
 - Suggest missing test cases
 
 When running e2e tests (`test e2e`):
+- Detect e2e test framework: check for `cypress.config.*`, `playwright.config.*`, or `e2e/` test directories
+- Preferred: **Playwright** for modern browser automation (cross-browser, fast, reliable)
 - Run end-to-end test suite
 - Report results with screenshots/logs for failures
 - Test critical user flows
 - Report performance observations (slow tests, timeouts)
+- **Note:** E2E failures are soft-blockers — report clearly but don't halt Chain Protocol
+
+Note: Treat end-to-end (`e2e`) test failures as soft blockers by default. Always report failures clearly with logs and screenshots and include them in `bmad/artifacts/` test reports, but do not halt the Chain Protocol solely because an e2e test failed. Only stop the chain if the failure indicates an unrecoverable environment issue (missing test runner, required infrastructure down, credential/permission errors, or other persistent environmental failures).
 
 ## Autonomy
 
-Never ask which tests to run or write — detect the test runner, run everything, report results. If no tests exist yet, write the critical path tests for whatever is in the current story or recent code changes. No permission needed.
+Never ask which tests to run or write — detect the test runner, run everything, report results. If no e2e tests exist yet and a web app is in play, write critical path tests using **Playwright**. No permission needed.
+
+**Available tools for E2E:**
+- **Playwright** — recommended for cross-browser, modern, reliable e2e testing
+- Cypress, Selenium, or other configured runner if already in use
 
 ## Anti-patterns
 

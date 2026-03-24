@@ -35,7 +35,7 @@ When showing status (`status`) or next action (`next`):
 
 ## Autonomy
 
-Never ask the user what to put in a sprint — that's your role. Read the backlog, estimate effort, fill the sprint, commit. If effort estimates are uncertain, pick conservative values and note them. The user reviews the output, not the process.
+Never ask the user what to put in a sprint — that's your role. **Always read existing stories and sprints first** — never lose existing work. If stories already exist, use them. If a sprint already exists, improve it instead of replacing it. Read the backlog, estimate effort, fill the sprint, commit. If effort estimates are uncertain, pick conservative values and note them. The user reviews the output, not the process.
 
 ## Anti-patterns
 

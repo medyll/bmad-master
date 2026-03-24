@@ -25,20 +25,11 @@
 **Prints:** Current phase, progress, next recommended action.
 **Example:** `bmad status`
 
-### `bmad next [--auto]`
-**What:** Execute the next logical step.
-**Type:** Script / Model (with --auto)
-**Role:** scrum
-**Without --auto:** Do one step, report, stop.
-**With --auto:** Keep doing steps until done (no prompts).
-**Example:** `bmad next` or `bmad next --auto`
-
 ### `bmad plan <type>`
 **What:** Create a planning document.
 **Type:** Model
 **Role:** pm (prd, spec) / architect (arch)
 **Types:** `prd` (Product Requirements), `spec` (Technical Spec), `arch` (Architecture).
-**With --auto:** Keep prd, spec and arch (no prompts).
 **Creates:** `bmad/artifacts/plan-{type}.md`
 **Example:** `bmad plan prd` or `bmad plan arch`
 
@@ -111,8 +102,6 @@
 ---
 
 ## Flags
-
-- `--auto`: Run continuously without prompts (continue until done or error).
 - `--delay <seconds>`: Wait N seconds between steps (useful for rate-limiting).
 
 ---
@@ -167,7 +156,6 @@ bmad dev story S1-01        # Start first story
 ```
 bmad status                 # Check where we are
 bmad next                   # Get next step
-bmad next --auto            # Auto-run next steps
 ```
 
 ### Shipping work
@@ -185,7 +173,6 @@ bmad dev review             # Review changes
 - ❌ Don't invent commands that aren't listed here
 - ❌ Don't guess what arguments mean
 - ❌ Don't create files manually if the skill can do it
-- ❌ Don't run `bmad next --auto` if you're unsure about the steps (use `bmad next` without --auto first)
 
 ---
 
@@ -195,5 +182,4 @@ bmad dev review             # Review changes
 - Check that `bmad/status.yaml` is readable
 - Check that `bmad/artifacts/` directory exists
 - Run `bmad status` to see current state
-- Run `bmad next` (without --auto) to see what's supposed to happen
 

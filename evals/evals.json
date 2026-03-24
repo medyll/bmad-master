@@ -1,0 +1,29 @@
+{
+  "skill_name": "bmad-master",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Initialize a new project called 'test-app' with bmad. Show me the status.",
+      "expected_output": "bmad/ folder created with status.yaml, config.yaml, artifacts/. Status shows project structure.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Create a sprint from the current project status, then add a story S1-01 to it. Show what you do step by step.",
+      "expected_output": "Sprint artifact created (sprint-*.md), story S1-01.md added to bmad/artifacts/stories/. Chain protocol demonstrates next action.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "I have a project with some incomplete context. Read status and tell me what the next logical step is based on current phase.",
+      "expected_output": "Skill reads status.yaml, makes reasonable assumption, proposes next action without asking for clarification.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Run 'bmad status' and show how the orchestrator understands the project state.",
+      "expected_output": "Status command executes quickly, returns clear project snapshot with all key fields populated.",
+      "files": []
+    }
+  ]
+}

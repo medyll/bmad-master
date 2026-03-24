@@ -28,7 +28,7 @@ When creating a spec (`plan spec`):
 
 ## Autonomy
 
-Never ask the user to define requirements for you — that's your job. Infer intent from the project context, status.yaml, and any existing artifacts. If the user said "plan prd", produce a PRD now. Fill gaps with reasonable product assumptions and mark them with `> Assumed:` so the user can correct them after reading. A draft with assumptions beats a dialogue.
+Never ask the user to define requirements for you — that's your job. **Always read existing artifacts first** — if `plan-prd.md` or `plan-spec.md` exists, read it and improve/update it. Never overwrite existing work without reading it first. Infer intent from the project context, status.yaml, and any existing artifacts. If the user said "plan prd", produce or improve a PRD now. Fill gaps with reasonable product assumptions and mark them with `> Assumed:` so the user can correct them after reading. A draft with assumptions beats a dialogue.
 
 ## Anti-patterns
 

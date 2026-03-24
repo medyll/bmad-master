@@ -1,25 +1,16 @@
 #!/usr/bin/env node
 /**
- * bmad.mjs — BMAD unified script runner
+ * engine.mjs — Engine for BMAD unified script runner
  *
  * Usage:
- *   node bmad.mjs <command> [args]
+ *   node engine.mjs <command> [args]
  *
  * Commands:
- *   init [dir]             Create bmad/ project structure
- *   analyze [dir]          Analyze existing project → generate status.yaml
- *   status [dir]           Display current status from status.yaml
- *   next [dir]             Show next recommended action
+ *   init [dir]             Create bmad/ project structure 
  *   snapshot [dir]         Snapshot status.yaml to artifacts/history/
- *   connector [dir]        Generate bmad/artifacts/connector.yml
- *   readme [--fill] [--level <l>]  Generate README template or draft
- *   wait [--seconds <s>]   Wait/delay handler for inter-task latency
- *   delay [--seconds <s>]  Alias for wait
+ *   connector [dir]        Generate bmad/artifacts/connector.yml 
  *   install                Install required dependencies (js-yaml)
  *   repair                 Verify environment and fix issues
- *   config set <key> <val>  Set a skill reference override (e.g. theme, role ref)
- *   config get [key]        Show current config overrides
- *   config unset <key>      Remove an override
  */
 
 import fs from 'fs/promises';
@@ -74,62 +65,14 @@ class Bmad {
       const require = createRequire(import.meta.url);
       return require('js-yaml');
     } catch {
-      this.err('yaml', 'js-yaml not found — run: node bmad.mjs install');
+      this.err('yaml', 'js-yaml not found — run: node engine.mjs install');
       process.exit(1);
     }
   }
+ 
 
-  // ── Delay/Wait Handler ──────────────────────────────────────────────────
 
-  async delay(seconds = 1) {
-    const ms = seconds * 1000;
-    console.log(`[bmad:delay] Waiting ${seconds}s...`);
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
 
-  async wait(args) {
-    let seconds = 1;
-    let config = false;
-
-    for (let i = 0; i < args.length; i++) {
-      if (args[i] === '--seconds' && args[i + 1]) {
-        seconds = parseInt(args[i + 1], 10);
-        i++;
-      } else if (args[i] === '--config') {
-        config = true;
-      } else if (args[i] === '--help' || args[i] === '-h') {
-        console.log(`
-BMAD Delay Handler
-
-Usage:
-  node bmad.mjs wait [--seconds <seconds>]
-  node bmad.mjs wait --config
-  node bmad.mjs wait --help
-
-Options:
-  --seconds <s>  Wait for specified seconds (default: 1)
-  --config       Show delay configuration
-  --help, -h     Show this help message
-`);
-        return;
-      }
-    }
-
-    if (config) {
-      try {
-        const configPath = path.join(__dirname, 'delay-config.json');
-        const configData = await fs.readFile(configPath, 'utf8');
-        const cfg = JSON.parse(configData);
-        console.log('\nBMAD Delay Configuration\n');
-        console.log(JSON.stringify(cfg, null, 2));
-        return;
-      } catch (err) {
-        console.warn(`Could not load delay-config.json:`, err.message);
-      }
-    }
-
-    await this.delay(seconds);
-  }
 
   // ── Walker ──────────────────────────────────────────────────────────────
 
@@ -176,16 +119,6 @@ Options:
     } catch {}
     const m = content.match(/progress:\s*(\d{1,3})/);
     return m ? Number(m[1]) : null;
-  }
-
-  parseNextAction(content, YAML) {
-    try {
-      const data = YAML.load(content);
-      if (data?.next_action) return String(data.next_action);
-      if (data?.next) return String(data.next);
-    } catch {}
-    const m = content.match(/next(?:_action)?:\s*(.+)/);
-    return m ? m[1].trim() : null;
   }
 
   parseQaBugs(content, YAML) {
@@ -411,7 +344,7 @@ sprints: []
     const phase = this.parsePhase(content, YAML);
     const progress = this.parseProgress(content, YAML);
 
-    console.log(`\n[bmad] Phase: ${phase} | Progress: ${progress != null ? progress + '%' : '?'}`);
+    console.log(`\n[bmad] Phase: ${phase} | Progress: ${progress != null ? progress + '%' : '?'} | Next: ${nextAction || 'unknown'}`);
     if (nextAction) {
       console.log(`  Next action: ${nextAction}`);
     } else {
@@ -700,7 +633,7 @@ sprints: []
     const header = [
       '# BMAD Auto-Discovery Connector',
       `# Generated: ${connector.meta.generated}`,
-      '# Do not edit manually — regenerate with: node bmad.mjs connector',
+      '# Do not edit manually — regenerate with: node engine.mjs connector',
       '',
     ].join('\n');
     await fs.writeFile(outPath, header + YAML.dump(connector, { lineWidth: 120 }), 'utf8');
@@ -894,55 +827,16 @@ const args = raw.slice(1);
 const bmad = new Bmad();
 
 const commands = {
-  init:      (a) => bmad.init(a[0]),
-  analyze:   (a) => bmad.analyze(a[0]),
-  status:    (a) => bmad.status(a[0]),
-  next:      (a) => bmad.next(a[0]),
-  config:    (a) => bmad.configCmd(a[0], a[1], a.slice(2).join(' ') || undefined),
+  init:      (a) => bmad.init(a[0]),  
   install:   () => bmad.install(),
   repair:    () => bmad.repair(),
   snapshot:  (a) => bmad.snapshot(a[0]),
-  connector: (a) => bmad.connector(a.find(x => !x.startsWith('--'))),
-  wait:      (a) => bmad.wait(a),
-  delay:     (a) => bmad.wait(a),
-  readme:    (a) => {
-    const fill = a.includes('--fill');
-    if (fill) return bmad.fillReadmeDraft();
-    return bmad.generateReadme();
-  },
-  sprint: async (a) => {
-    if (a[0] === 'story') {
-      let id = `story-${Date.now()}`;
-      for (let i = 1; i < a.length; i++) {
-        if (a[i] === '--id' && a[i + 1]) { id = a[i + 1]; i++; }
-      }
-      const dir = path.join(bmad.cwd, 'bmad', 'artifacts', 'stories');
-      await fs.mkdir(dir, { recursive: true });
-      const out = path.join(dir, `${id}.md`);
-      const content = [`# Story ${id}`, '', `Generated: ${new Date().toISOString()}`, '', 'Summary: TODO', ''].join('\n');
-      await fs.writeFile(out, content, 'utf8');
-      bmad.log('sprint', `created story -> ${path.relative(bmad.cwd, out)}`);
-      return;
-    }
-    bmad.log('sprint', 'no-op (use `sprint story`)');
-  },
-  dev: async (a) => {
-    if (a[0] === 'story' && a[1]) {
-      const id = a[1];
-      const dir = path.join(bmad.cwd, 'bmad', 'artifacts', 'stories');
-      await fs.mkdir(dir, { recursive: true });
-      const outFile = path.join(dir, `${id}.md`);
-      const content = [`# Story ${id}`, '', `Implemented: ${new Date().toISOString()}`, '', 'Changes: TODO', 'Tests: TODO', ''].join('\n');
-      await fs.writeFile(outFile, content, 'utf8');
-      bmad.log('dev', `wrote story -> ${path.relative(bmad.cwd, outFile)}`);
-      return;
-    }
-    bmad.log('dev', 'no-op (use `dev story <id>`)');
-  },
+  connector: (a) => bmad.connector(a.find(x => !x.startsWith('--'))),  
+   
 };
 
 if (!cmd || !commands[cmd]) {
-  console.error(`Usage: node bmad.mjs <command> [args]\nCommands: ${Object.keys(commands).join(', ')}`);
+  console.error(`Usage: node engine.mjs <command> [args]\nCommands: ${Object.keys(commands).join(', ')}`);
   process.exit(1);
 }
 
