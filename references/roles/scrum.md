@@ -31,32 +31,39 @@ When showing status (`status`) or next action (`next`):
 - Use the **Read tool** on `./bmad/status.yaml` — that is the only tool call allowed
 - Do NOT run any CLI, script, shell command, or Node.js process
 - **Stop after displaying the template** — no snapshot, no tests, no chain, no writes
-- Render this exact template (fill from status.yaml fields, keep it short):
+- Render this exact template (fill from status.yaml fields and project artifacts):
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   📦 <project>
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Phase      <planning|development|testing>
-  Progress   [██████░░░░] <N>%
+  <1-sentence plain-language summary of what this project does and who it's for>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Progress   [██████░░░░] <N>%   Phase: <planning|development|testing>
   Sprint     <active sprint id or "none">
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  ✅ Last     <active_role: what was done — from next_action or last artifact>
-  → Next     <next_action>
+  ✅ Done     <what was recently completed — in plain terms, not tech jargon>
+  🔨 Doing    <what is currently being built — in plain terms>
+  💡 Next     <next meaningful step — in plain terms>
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Also possible:
-    bmad continue   — execute next_action now
-    bmad test       — run test suite
-    bmad audit      — code quality check
-    bmad doc        — generate README
+  Stories    <completed>/<total> completed this sprint
+  Artifacts  <list key artifacts ready: PRD, spec, tests...>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  bmad continue   — execute next step now
+  bmad test       — run test suite
+  bmad audit      — code quality check
+  bmad doc        — generate README
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 Rules:
 - Progress bar: 10 blocks, filled proportionally (e.g. 45% = 4-5 filled)
-- "Last" line: infer from `active_role` + `next_action` context — keep to one line
-- If blockers exist, add `⚠️ Blocker: <reason>` between Last and Next
-- No prose, no extra explanation — the template is the output
+- **Project summary line**: infer from PRD/spec artifacts if available, else from project name — write for a non-technical reader
+- **Done/Doing/Next**: translate technical work into plain language. "Implemented auth module" → "Users can now log in securely". "Writing unit tests" → "Verifying the core features work correctly"
+- If blockers exist, add `⚠️ Blocker: <plain-language reason>` after the Next line
+- Stories count: read from `sprints[active].stories` in status.yaml
+- Artifacts: only list ones with status `done` in status.yaml
+- No prose outside the template — the template IS the output
 
 ## Autonomy
 

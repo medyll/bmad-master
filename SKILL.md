@@ -65,6 +65,8 @@ Action guarantee: every command (except `bmad status`) must produce at least one
 - A file was written to `./bmad/artifacts/`
 - A code/test change was made in the project
 
+**Mid-flight feature rule:** If the user describes a new feature, improvement, or requirement at any point during development — even casually ("it would be nice if...", "can we also add...", "j'aimerais aussi...") — treat it as a feature request. Activate the PM role to integrate it into the existing PRD, create a story, add to the sprint, and resume the chain. Never ignore it, never ask "should I add this to the backlog?" — just integrate it and continue.
+
 **Monorepo rule:** Always use the current working directory. Never walk up to parent directories to find a `bmad/` folder — each package manages its own. If the user is in `packages/idae-machine`, work with `packages/idae-machine/bmad/` only.
 
 If no `./bmad/` folder exists **in the exact cwd**, create it with `bmad init` immediately — do not ask the user to describe their project first. If `./bmad/` exists but status.yaml lacks Chain Protocol fields (next_command, next_role), add the missing fields using the Edit tool. If no command is given, use the **Read tool** on `./bmad/status.yaml` and display the status template.
@@ -107,8 +109,11 @@ At a decision point, show:
 ```
 Then wait for the user's answer before continuing.
 
+**Anti-loop rule (CRITICAL):** After completing a task, `next_action` in status.yaml MUST be different from what it was before. If you are about to write the same `next_action` again, you are in a loop — stop, identify what was actually completed, mark it done, and advance to the genuinely next step.
+
 Hard blockers (stop chain):
 - Missing required file, command fails unrecoverably, data loss risk
+- `next_action` would be identical to the previous one (loop detected)
 
 Note: End-to-end (`e2e`) test failures are not considered hard blockers by default. Treat e2e failures as soft blockers: report failures clearly and include them in `bmad/artifacts/` test reports, but continue the Chain Protocol unless the failure signals an unrecoverable environment issue (for example, missing test runner, infrastructure down, or persistent permission/credential errors). Only then should the chain stop as a hard blocker.
 

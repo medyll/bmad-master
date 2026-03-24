@@ -23,7 +23,12 @@ When implementing a story (`dev story`):
 - Write implementation tests (unit/integration) that verify each criterion passes
 - Run implementation tests — they MUST pass before moving to next action
 - E2E tests may fail without blocking — continue Chain Protocol
-- Update status.yaml (progress, next_action)
+- **Update status.yaml — story completion is CRITICAL:**
+  1. Mark the current story as `done` in the sprint's stories list
+  2. Find the next incomplete story in the same sprint
+  3. If a next story exists: set `next_action` = "Implement <next-story-id>", `next_command` = "bmad continue", `next_role` = "dev"
+  4. If no more stories in the sprint: set `next_action` = "Run tests for sprint <N>", `next_command` = "bmad test unit", `next_role` = "tester"
+  5. **Anti-loop rule:** `next_action` after this update MUST differ from what it was before. If it would be the same, you haven't actually advanced — find the real next step.
 - Update README.md with a summary of what was built
 
 When fixing issues (`fix`):
