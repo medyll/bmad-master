@@ -1,0 +1,21 @@
+# BMAD Status — bmad-master
+# This file is the single source of truth for project state.
+
+project: bmad-master
+phase: planning
+progress: 0
+next_action: "Create a PRD with bmad plan prd"
+
+phases:
+  - name: planning
+    status: in_progress
+  - name: development
+    status: upcoming
+  - name: testing
+    status: upcoming
+  - name: release
+    status: upcoming
+
+artifacts: {}
+
+sprints: []

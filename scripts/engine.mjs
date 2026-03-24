@@ -5,12 +5,28 @@
  * Usage:
  *   node engine.mjs <command> [args]
  *
- * Commands:
- *   init [dir]             Create bmad/ project structure 
+ * User Commands (dispatched by SKILL.md roles):
+ *   status [dir]           Read and display current project state
+ *   next [dir]             Show next recommended action
+ *   continue [dir]         (placeholder — SKILL.md invokes role)
+ *   test [dir]             (placeholder — SKILL.md invokes tester role)
+ *   audit [dir]            (placeholder — SKILL.md invokes reviewer role)
+ *   doc [dir]              (placeholder — SKILL.md invokes designer role)
+ *
+ * Internal Commands:
+ *   init [dir]             Create bmad/ project structure with all Chain Protocol fields
+ *   update [dir]           Add missing Chain Protocol fields to existing status.yaml
+ *   analyze [dir]          Scan project and generate status.yaml
  *   snapshot [dir]         Snapshot status.yaml to artifacts/history/
- *   connector [dir]        Generate bmad/artifacts/connector.yml 
+ *   connector [dir]        Generate bmad/artifacts/connector.yml
+ *   config <action> [key]  Manage skill configuration (get/set/unset)
  *   install                Install required dependencies (js-yaml)
  *   repair                 Verify environment and fix issues
+ *
+ * Note: Accepts natural language variations:
+ *   - "bmad continue please" → continue
+ *   - "what's next s'il vous plaît" → next
+ *   - "run tests please" → test
  */
 
 import fs from 'fs/promises';
@@ -133,6 +149,15 @@ class Bmad {
     return [];
   }
 
+  parseNextAction(content, YAML) {
+    try {
+      const data = YAML.load(content);
+      if (data?.next_action) return String(data.next_action);
+    } catch {}
+    const m = content.match(/next_action:\s*["|']?([^"|'\n]+)["|']?/);
+    return m ? m[1].trim() : null;
+  }
+
   // ── Commands ────────────────────────────────────────────────────────────
 
   /**
@@ -167,6 +192,9 @@ project: ${projectName}
 phase: planning
 progress: 0
 next_action: "Create a PRD with bmad plan prd"
+next_command: "bmad plan prd"
+next_role: "pm"
+active_role: "pm"
 
 phases:
   - name: planning
@@ -194,10 +222,68 @@ stack: []
     await fs.writeFile(path.join(dir, 'config.yaml'), configYaml, 'utf8');
 
     this.log('init', `created bmad/ structure at ${path.relative(this.cwd, dir)}/`);
-    console.log('  - status.yaml (project state)');
+    console.log('  - status.yaml (project state + Chain Protocol fields)');
     console.log('  - config.yaml (project settings)');
     console.log('  - artifacts/ (output directory)');
     console.log('\nNext step: bmad plan prd');
+  }
+
+  /**
+   * update — add missing Chain Protocol fields to existing status.yaml
+   * Preserves all existing content, only adds next_command, next_role, active_role if missing
+   */
+  async update(bmadDirOverride) {
+    const YAML = await this.loadYaml();
+    const dir = this.bmadDir(bmadDirOverride);
+    const statusPath = path.join(dir, 'status.yaml');
+
+    let content;
+    try {
+      content = await fs.readFile(statusPath, 'utf8');
+    } catch {
+      this.err('update', `No status.yaml found at ${statusPath}`);
+      console.log('Run `bmad init` to create a new project.');
+      process.exit(1);
+    }
+
+    let data;
+    try {
+      data = YAML.load(content);
+    } catch (e) {
+      this.err('update', `Failed to parse status.yaml: ${e.message}`);
+      process.exit(1);
+    }
+
+    let updated = false;
+
+    // Add missing Chain Protocol fields
+    if (!data.next_command) {
+      data.next_command = 'bmad plan prd';
+      updated = true;
+    }
+    if (!data.next_role) {
+      data.next_role = 'pm';
+      updated = true;
+    }
+    if (!data.active_role) {
+      data.active_role = data.next_role || 'pm';
+      updated = true;
+    }
+
+    if (updated) {
+      try {
+        await fs.writeFile(statusPath, YAML.dump(data, { lineWidth: 120 }), 'utf8');
+        this.log('update', `added missing Chain Protocol fields to status.yaml`);
+        console.log(`  - next_command: ${data.next_command}`);
+        console.log(`  - next_role: ${data.next_role}`);
+        console.log(`  - active_role: ${data.active_role}`);
+      } catch (e) {
+        this.err('update', `Failed to write status.yaml: ${e.message}`);
+        process.exit(1);
+      }
+    } else {
+      this.log('update', 'status.yaml already has all Chain Protocol fields');
+    }
   }
 
   /**
@@ -818,25 +904,70 @@ sprints: []
   }
 }
 
+// ── Command Parser ──────────────────────────────────────────────────────────
+// Accepts natural language variations and maps to canonical commands
+
+function parseCommand(rawInput) {
+  // Remove file arguments and normalize
+  const input = rawInput
+    .join(' ')
+    .toLowerCase()
+    .replace(/please|s'il te plaît|s'il vous plaît|merci|thanks/gi, '')
+    .trim();
+
+  // Maps for user commands with variations (order matters — check specifics first)
+  const map = {
+    next: /^(?:what's?|whats)\s?next\b|^next(?:\s|$)|^next\s?action/,
+    init: /^init(?:\s|$)/,
+    status: /^status$/,
+    continue: /^continue$|^go\s?(?:on|ahead)|^keep\s?(?:going|working)|^keep\s?on/,
+    test: /^test(?:\s|$)|^run\s?(?:tests?|unit|e2e)/,
+    audit: /^audit$|^(?:check|review|analyze)\s?(?:code|quality)/,
+    doc: /^doc(?:s)?(?:\s|$)|^generate\s?(?:readme|docs?)/,
+    analyze: /^analyze(?:\s|$)|^scan/,
+    snapshot: /^snapshot(?:\s|$)/,
+    connector: /^connector(?:\s|$)/,
+    install: /^install(?:\s|$)/,
+    repair: /^repair(?:\s|$)/,
+    config: /^config(?:\s|$)/,
+  };
+
+  for (const [cmd, pattern] of Object.entries(map)) {
+    if (pattern.test(input)) return cmd;
+  }
+
+  // Fallback: return first token
+  return input.split(/\s+/)[0] || null;
+}
+
 // ── CLI entry point ─────────────────────────────────────────────────────────
 
 const raw = process.argv.slice(2);
-const cmd = raw[0];
-const args = raw.slice(1);
-
 const bmad = new Bmad();
 
 const commands = {
-  init:      (a) => bmad.init(a[0]),  
+  init:      (a) => bmad.init(a[0]),
+  update:    (a) => bmad.update(a[0]),
+  status:    (a) => bmad.status(a[0]),
+  next:      (a) => bmad.next(a[0]),
+  analyze:   (a) => bmad.analyze(a[0]),
   install:   () => bmad.install(),
   repair:    () => bmad.repair(),
   snapshot:  (a) => bmad.snapshot(a[0]),
-  connector: (a) => bmad.connector(a.find(x => !x.startsWith('--'))),  
-   
+  connector: (a) => bmad.connector(a.find(x => !x.startsWith('--'))),
+  config:    (a) => bmad.configCmd(a[0], a[1], a[2]),
 };
 
-if (!cmd || !commands[cmd]) {
+if (!raw.length) {
   console.error(`Usage: node engine.mjs <command> [args]\nCommands: ${Object.keys(commands).join(', ')}`);
+  process.exit(1);
+}
+
+const cmd = parseCommand(raw);
+const args = raw.slice(1);
+
+if (!cmd || !commands[cmd]) {
+  console.error(`Unknown command: ${raw[0]}\nAvailable: ${Object.keys(commands).join(', ')}`);
   process.exit(1);
 }
 

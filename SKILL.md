@@ -1,12 +1,22 @@
 ---
 name: bmad-master
 description: |-
-  Project orchestrator for managing development workflows end-to-end.
-  Use for: creating project structure, planning work, tracking progress, writing docs, running tests, auditing code, organizing sprints and stories.
-  Triggers: "what's next?", "create sprint", "make roadmap", "audit code", "help plan", "write spec", "generate README", "organize my project", "what should I work on", "project management", "track progress", "backlog", "prioritize tasks", "set up project", "dev workflow", "project status", "start new project".
-  Use this skill whenever the user mentions project orchestration, task tracking, sprint planning, story management, or wants to structure their development workflow — even if they don't say "bmad" explicitly.
-  Commands: [init] [analyze] [status] [continue] [plan] [sprint] [dev] [test] [audit] [doc] [readme] [fix]
-argument-hint: "init, analyze, status, continue, plan prd, plan spec, plan arch, sprint, sprint story, dev story, dev review, test unit, test e2e, audit, audit --code, doc, readme, readme --fill, fix"
+  Project orchestrator — Your interface between you and the development workflow.
+  Say what you want, BMAD handles the rest. No management overhead, no technical jargon.
+
+  Main commands:
+  - `bmad init PROJECT_NAME` — Start a new project
+  - `bmad continue` — Keep working (implements stories, runs tests, chains automatically)
+  - `bmad status` / `bmad what's next` — See project state
+  - `bmad test` — Run tests (unit + e2e)
+  - `bmad audit` — Check code quality
+  - `bmad doc` — Generate docs/README
+
+  Internal workflow (BMAD handles automatically): planning → sprints → stories → dev → test → release
+
+  Triggers: "bmad", "what's next", "continue", "status", "test", "audit"
+  Use whenever you have project work to do. Just say it naturally.
+argument-hint: "init, continue, status, what's next, test, audit, doc"
 compatibility:
   - mcp_v2
 user-invocable: true
@@ -22,17 +32,23 @@ metadata:
 
 ## Core Behavior
 
-**Use as Orchestrator:** Read `bmad/status.yaml` → understand project state → execute task with appropriate role → update status → chain to next action automatically. No waiting for user input between steps. The YAML file is the state machine; follow it.
+**IMPORTANT — Working Directory Rule:** All file operations work on the user's **current project directory** (where they ran `bmad continue`), NEVER the skill's internal folder. Do not access `C:\Users\Mydde\.claude\skills\bmad-master\bmad\` — that is the skill's bootstrap template only.
 
-**Assumption-first approach:** Read `status.yaml` and project context. If ambiguous, make a reasonable assumption (document it with `> Assumed:`), execute, show what you did. This is faster than asking. Only ask if you truly cannot infer the intent from available context (rare).
+**Use as Orchestrator:** Read `./bmad/status.yaml` from the user's current directory → understand project state → execute task with appropriate role → update status → chain to next action automatically. No waiting for user input between steps. The YAML file is the state machine; follow it.
 
-Action guarantee: every model command must produce measurable progress. When ambiguity exists, choose a reasonable course of action, execute it, and record the assumption with `> Assumed:`. Measurable progress means at least one of the following occurred during the command:
-- `bmad/status.yaml` was updated (`active_role` or `progress`)
-- A new or updated artifact was written to `bmad/artifacts/`
-- A code/test change was created in the workspace
-- A deterministic script was run and its real output captured in artifacts/logs
+**Mandatory first step — always:** Check if `./bmad/status.yaml` exists in the current directory (not a parent). If yes, read it. If no, run `bmad init`. This step is not optional and cannot be assumed — it must actually happen.
 
-If no `bmad/` folder exists, run `bmad init` immediately — do not ask the user to describe their project first. If no command is given (e.g. user says  "help me" or "What is to do now ?"), run `node scripts/engine.mjs status` and show the result
+**Assumption-first approach:** Only use `> Assumed:` for *implementation decisions* (how to build a feature, what test framework to use, etc.). Never assume the state of status.yaml — always read it first. This is the key difference between a productive assumption and stalling.
+
+Action guarantee: every command must produce at least one concrete, verifiable result:
+- `./bmad/status.yaml` was read AND updated (`active_role`, `next_action`, `progress`)
+- A file was written to `./bmad/artifacts/`
+- A code/test change was made in the project
+- A command was run and its real output was shown
+
+**Monorepo rule:** Always use the current working directory. Never walk up to parent directories to find a `bmad/` folder — each package manages its own. If the user is in `packages/idae-machine`, work with `packages/idae-machine/bmad/` only.
+
+If no `./bmad/` folder exists **in the exact cwd**, run `bmad init` immediately — do not ask the user to describe their project first. If `./bmad/` exists but status.yaml lacks Chain Protocol fields (next_command, next_role), run `bmad update` to sync. If no command is given (e.g. user says "help me" or "What is to do now ?"), read `./bmad/status.yaml` from the project directory and show the result
 
 ---
 
@@ -40,17 +56,36 @@ If no `bmad/` folder exists, run `bmad init` immediately — do not ask the user
 
 **After every model command, you MUST chain to the next action automatically.** This is not optional. It is the default behavior. Productivity first.
 
-Format your response like this every time:
+**status.yaml update is SILENT and DONE FIRST** — update it before displaying anything to the user. Never list it as a pending step. Never say "I will update status.yaml" — just do it.
 
+**Normal flow (bmad continue):** Execute → update status.yaml → chain to next action. No menu, no choices, no interruptions. Just show:
 ```
-[DONE: <what you just completed>]
-[NEXT: <next_action from status.yaml>]
+[DONE: <what you just completed — specific: files created, tests run, results>]
+[NEXT: <next action>]
 --- executing ---
 ```
 
-Then immediately execute the next action without pausing. Only stop if:
-- The user explicitly wrote "stop", "pause", or "wait"
-- A **hard blocker** occurs (missing required file, command fails unrecoverably, data loss risk)
+**Decision points only** — show a menu when BMAD reaches a genuine fork that requires human judgment:
+- End of a sprint (all stories done)
+- End of a milestone (release, major refactor)
+- Two or more equally valid directions exist
+
+At a decision point, show:
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  <project>  |  <phase>  |  <progress>%
+  Sprint <N> complete — what's next?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. Next sprint  — <sprint goal>
+  2. Polish       — CHANGELOG, README, publish
+  3. Test         — full e2e suite
+  4. Pause
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+Then wait for the user's answer before continuing.
+
+Hard blockers (stop chain):
+- Missing required file, command fails unrecoverably, data loss risk
 
 Note: End-to-end (`e2e`) test failures are not considered hard blockers by default. Treat e2e failures as soft blockers: report failures clearly and include them in `bmad/artifacts/` test reports, but continue the Chain Protocol unless the failure signals an unrecoverable environment issue (for example, missing test runner, infrastructure down, or persistent permission/credential errors). Only then should the chain stop as a hard blocker.
 
@@ -68,41 +103,35 @@ Action-first rules (no stalling on proposals):
 ## Instructions
 
 
-### Model Instructions Shorthands (AI-executed)
+---
 
-These instructions are interpreted and executed by the skill. The skill reads `status.yaml`, understands the project context, and produces the appropriate action.
-It loads the corresponding role, execute the task, then update `status.yaml` with new progress/phase/next_action.
+## What You Say (User Interface)
 
-| Instruction | What it does | Output |
-|---------|-------------|--------|
-| `bmad plan` | Display a plan document. Types: `prd`, `spec`, `arch` | `bmad/artifacts/plan-{type}.md` |
-| `bmad plan <type>` | Create a plan document. Types: `prd`, `spec`, `arch` | `bmad/artifacts/plan-{type}.md` |
-| `bmad sprint` | Create a sprint from backlog/plan | `bmad/artifacts/sprint-{date}.md` |
-| `bmad sprint story` | Add a story to current sprint | `bmad/artifacts/stories/{id}.md` |
-| `bmad continue` | Implement the active story (code + tests) in full | Code changes + updated `README.md` |
-| `bmad dev story <id>` | Implement a story (code + tests) | Code changes + updated `README.md` |
-| `bmad dev review` | Review code changes | Feedback + fixes |
-| `bmad test <type>` | Run tests. Types: `unit`, `e2e` | Test results (e2e failures reported but non-blocking) |
-| `bmad audit [--code]` | Audit codebase for issues | `bmad/artifacts/audit-{date}.md` |
-| `bmad readme` | Generate or update the project documentation | `README.md` |
-| `bmad fix [--syntax]` | Fix issues in code | Code changes |
+These are the only commands you need. BMAD handles everything else automatically.
+
+| You Say | What happens |
+|---------|-------------|
+| `bmad init <project>` | Create project structure, ready to start |
+| `bmad continue` | Keep working: implement stories, write tests, chain to next step automatically |
+| `bmad status` / `bmad what's next` | Show current project state + next action |
+| `bmad test` | Run all tests (unit + e2e). Non-critical e2e failures won't block progress |
+| `bmad audit` | Check code quality and surface issues |
+| `bmad doc` | Generate/update project docs and README |
+
+**That's it. Everything else (planning, sprints, stories, role assignments, test orchestration) happens automatically behind the scenes.**
 
 ---
 
-## Commands
+## How BMAD Works (Internal)
 
-### Script Commands (deterministic)
+These script commands run deterministically to manage state. **You never call these directly** — BMAD executes them as needed.
 
-| Command | What it does |
+| Internal Command | What it does |
 |---------|-------------|
-| `bmad init` | Create `bmad/` with `status.yaml`, `config.yaml`, `artifacts/` |
 | `bmad analyze` | Scan project, generate `status.yaml` from existing code |
-| `bmad status` | Scan project, update `status.yaml` if needed and display `status.yaml` |
 | `bmad snapshot` | Save timestamped copy of `status.yaml` to `artifacts/history/` |
 | `bmad connector` | Generate `artifacts/connector.yml` manifest |
-| `bmad config set <key> <val>` | Set a skill reference override |
-| `bmad config get [key]` | Show current overrides |
-| `bmad config unset <key>` | Remove an override |
+| `bmad config set/get/unset` | Manage skill configuration overrides |
 ---
 
 ## Roles
@@ -125,7 +154,7 @@ Each model command has a corresponding **role** — a contextual lens that shape
 
 Follow these steps **in order** every time you execute a model command:
 
-1. **Read `bmad/status.yaml`** — get current phase, progress, next_action, next_command, next_role
+1. **Read `./bmad/status.yaml` now** — This is mandatory, not optional. Read the actual file from the project's current directory. If it doesn't exist, run `bmad init` and stop. If it exists, extract: phase, progress, next_action, next_command, next_role. Do not proceed without real data from this file — no assumptions about its contents.
 2. **Check `references/overrides.json`** — if the file exists, read it. If not, skip to step 3.
    - If `role.<name>.prompt` exists for this role: note it (you'll prepend it in step 4)
    - If `role.<name>.ref` exists: note the file path (you'll read it **in addition to** the role file)
@@ -135,13 +164,14 @@ Follow these steps **in order** every time you execute a model command:
    - Read the file at `role.<name>.ref` as additional context
 5. **Print role tag:** First line of response must be **[PM]**, **[Architect]**, **[Developer]**, **[Reviewer]**, **[Tester]**, **[Scrum Master]**, or **[Designer]**
 6. **Execute the command** following the role's perspective, priorities, and output format. Perform at least one concrete action (see "Action guarantee" above) before producing non-actionable proposals.
-7. **Update `bmad/status.yaml` (CRITICAL for Chain Protocol):**
+7. **Update project state (CRITICAL for Chain Protocol):** Modify the project's `./bmad/status.yaml` to reflect:
    - `active_role` = current role
    - `next_action` = human-readable description
    - `next_command` = executable command (must match next_role)
    - `next_role` = which role executes next (must match next_command)
    - `progress` when work meaningfully advances
    - **Validation:** Ensure `next_command` and `next_role` are in sync (see Validation Rules table above). Inconsistency breaks the chain.
+   - **How to write:** Use the filesystem directly; do NOT use engine.mjs for writes.
 
 ### Roles Autonomy Rule
 
