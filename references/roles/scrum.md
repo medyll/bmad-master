@@ -37,7 +37,7 @@ When showing status (`status`) or next action (`next`):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   📦 <project>
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Phase      <planning|development|testing|release>
+  Phase      <planning|development|testing>
   Progress   [██████░░░░] <N>%
   Sprint     <active sprint id or "none">
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

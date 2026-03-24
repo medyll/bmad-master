@@ -13,7 +13,8 @@ description: |-
   - `bmad audit` — Check code quality
   - `bmad doc` — Generate docs/README
 
-  Internal workflow (BMAD handles automatically): planning → sprints → stories → dev → test → release
+  Internal workflow (BMAD handles automatically): planning → sprints → stories → dev → test
+  Note: publish, tag, and release are handled by CI — BMAD stops at passing tests.
 
   Triggers: "bmad", "what's next", "continue", "status", "test", "audit"
   Use whenever you have project work to do. Just say it naturally.
@@ -99,7 +100,7 @@ At a decision point, show:
   Sprint <N> complete — what's next?
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   1. Next sprint  — <sprint goal>
-  2. Polish       — CHANGELOG, README, publish
+  2. Polish       — CHANGELOG, README update
   3. Test         — full e2e suite
   4. Pause
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
