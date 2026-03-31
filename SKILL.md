@@ -9,13 +9,13 @@ description: |-
   - `bmad continue` — Keep working (implements stories, runs tests, chains automatically)
   - `bmad status` / `bmad what's next` — Display current state (reads status.yaml, no execution)
   - `bmad analyze` — Rebuild status.yaml from project state (explicit regeneration)
-  - `bmad test` — Run unit tests only (e2e smoke tests optional, not comprehensive)
+  - `bmad test` — Run unit and e2e tests
   - `bmad audit` — Check code quality
   - `bmad doc` — Generate docs/README
 
   Internal workflow (BMAD handles automatically): planning → sprints → stories → dev → test
   Note: publish, tag, and release are handled by CI — BMAD stops at passing tests.
-  NOTE: E2E tests are limited to basic smoke tests only. LLMs cannot reliably orchestrate complex e2e suites.
+
 
   Triggers: "bmad", "what's next", "continue", "status", "test", "audit"
   Use whenever you have project work to do. Just say it naturally.
@@ -116,13 +116,11 @@ Hard blockers (stop chain):
 - Missing required file, command fails unrecoverably, data loss risk
 - `next_action` would be identical to the previous one (loop detected)
 
-**Testing Philosophy (E2E Limits):** LLMs are poor orchestrators of complex, environment-dependent e2e suites. They struggle with timing, state management, and flaky infrastructure. Therefore:
-- `bmad test` runs **unit tests only** (the primary validation lever)
-- E2E tests, if present in the project, are limited to **basic smoke tests** (5–10 critical user flows)
-- Complex e2e suites should be removed or migrated to CI/CD pipelines where deterministic orchestration matters
-- E2E failures are soft blockers and do not stop the Chain Protocol unless they signal infrastructure issues
-
-Note: End-to-end (`e2e`) test failures are not considered hard blockers by default. Treat e2e failures as soft blockers: report failures clearly and include them in `bmad/artifacts/` test reports, but continue the Chain Protocol unless the failure signals an unrecoverable environment issue (for example, missing test runner, infrastructure down, or persistent permission/credential errors). Only then should the chain stop as a hard blocker.
+**Testing Philosophy (E2E):** E2E tests are full-scope — not limited to smoke tests. Write comprehensive e2e suites that cover real user flows.
+- `bmad test` runs **unit tests and e2e tests**
+- E2E failures become **hard blockers only if** a corresponding unit test for the same functionality also fails — this confirms the issue is real, not environmental
+- If no unit test exists for the failing e2e path, the E2E failure is **not a blocker** — report it clearly but continue the Chain Protocol
+- If the e2e failure signals an unrecoverable environment issue (missing test runner, infrastructure down, credential errors), treat it as a hard blocker regardless
 
 Action-first rules (no stalling on proposals):
 - When executing a model command, pick a single, concrete recommended action and execute it immediately. Do not present multiple alternative proposals as a substitute for action.
@@ -150,7 +148,7 @@ These are the only commands you need. BMAD handles everything else automatically
 | `bmad continue` | Keep working: implement stories, write tests, chain to next step automatically |
 | `bmad status` / `bmad what's next` | **Display** current state — reads `status.yaml` and shows it. No execution. |
 | `bmad analyze` | **Rebuild** `status.yaml` from scratch by scanning the project. Use when status is stale or missing. |
-| `bmad test` | Run unit tests only. E2E limited to basic smoke tests (LLMs cannot reliably orchestrate complex e2e suites) |
+| `bmad test` | Run unit and e2e tests. E2E failures are hard blockers only if a matching unit test also fails |
 | `bmad audit` | Check code quality and surface issues |
 | `bmad doc` | Generate/update project docs and README |
 

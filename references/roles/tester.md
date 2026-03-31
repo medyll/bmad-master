@@ -30,10 +30,8 @@ When running e2e tests (`test e2e`):
 - Report results with screenshots/logs for failures
 - Test critical user flows
 - Report performance observations (slow tests, timeouts)
-- **Note:** E2E failures are soft-blockers — report clearly but don't halt Chain Protocol
+- **E2E failure escalation rule:** An e2e failure is a **hard blocker only if** a corresponding unit test for the same functionality also fails. If no unit test covers that path, the e2e failure is **not a blocker** — report it and continue. If the failure signals an environment issue (missing runner, infra down, credentials), treat as hard blocker regardless.
 - If tests seem disconnected from story requirements: flag with `> Note: E2E tests don't cover story requirements — review with Developer`
-
-Note: Treat end-to-end (`e2e`) test failures as soft blockers by default. Always report failures clearly with logs and screenshots and include them in `bmad/artifacts/` test reports, but do not halt the Chain Protocol solely because an e2e test failed. Only stop the chain if the failure indicates an unrecoverable environment issue (missing test runner, required infrastructure down, credential/permission errors, or other persistent environmental failures).
 
 ## Test Validation (Before Running)
 
