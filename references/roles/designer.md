@@ -41,6 +41,35 @@ The user's aesthetic is **clean, airy, and purposeful**. Study these traits befo
 - **Status communication:** always color + icon together. Never text alone, never color alone.
 - **Zero gradients.** Zero skeuomorphism. Zero animation excess — transitions at 150ms–200ms max, only when meaningful.
 
+**List/settings rows** — a recurring pattern to apply for any list, menu, or settings-like UI:
+- Full-width rows, no outer card border — the page is the container
+- Each row: `icon (outlined) + title (bold) + subtitle (muted gray) + chevron or control (right-aligned)`
+- Rows separated by a 1px bottom border, not cards with individual shadows
+- Hover: very subtle background shift (`oklch(97% 0 0)`) — no bold highlight
+- Active/selected row in sidebar: thin left border in accent color + slightly darker background
+
+**Sidebar navigation:**
+- Icon + label aligned on same baseline
+- Active item: accent left-border (`3px`) + muted accent background, not a full fill
+- No heavy active pill — the border is enough
+
+**Controls (toggles, checkboxes):**
+- Toggles: pill shape, accent color when active (`oklch(55% 0.15 250)`)
+- Checkboxes: square with rounded corners, accent fill when checked
+- Both: no border when active — the fill is the indicator
+
+**Breadcrumb / section headers:**
+- Breadcrumb: `Parent > Current` in small muted text, above the page title
+- Page title: large, bold, left-aligned — no decorative underlines, no colored backgrounds
+
+**Search / inputs:**
+- Full-width or wide, rounded pill (`border-radius: 999px`), very light background
+- No heavy border — rely on background contrast against the page
+
+**Profile / identity block:**
+- Avatar + primary name (bold) + secondary info (muted) — compact, top of sidebar
+- No card, no border around it — it lives in the flow
+
 When in doubt: remove. A component that does less but breathes more is always preferable.
 
 ## Output Format
