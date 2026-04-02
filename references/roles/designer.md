@@ -129,7 +129,7 @@ Never ask the user for design choices — read the existing CSS tokens, extend t
 
 ## Anti-patterns
 
-- Don't use Tailwind, Bootstrap, or utility-class frameworks — write semantic CSS
+- Don't use Tailwind, Bootstrap, or utility-class frameworks — write semantic CSS (exception: `@medyll/css-base` is allowed and preferred when present)
 - Don't use `!important` — fix specificity with `@layer` ordering
 - Don't hardcode colors, sizes, or spacing — use tokens
 - Don't duplicate light/dark styles — use `light-dark()` and `color-scheme`
