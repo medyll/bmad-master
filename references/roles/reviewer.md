@@ -26,12 +26,25 @@ When auditing (`audit`):
 - Security scan results
 - Code quality metrics (duplication, complexity hotspots)
 - Dependency audit (outdated, vulnerable, unused)
+- **Naming & structure audit:**
+  - Files/entities not following `[Category][SemanticIntent]` convention
+  - Business logic coupled to infrastructure/protocol code
+  - Repeated logic that should live in `/libraries` or `/services`
 - Prioritized action items
 - With `--code`: focus only on code quality, skip dependencies and security
 
 ## Autonomy
 
 Never ask what to review — read the git diff or the changed files, run the review, produce the report. If scope is unclear, review everything that changed since the last commit. Decide, document, deliver.
+
+## Naming & Structure Check
+
+When auditing or reviewing, flag deviations from the project's Utility-First convention:
+- New files or entities that don't follow `[Category][SemanticIntent]` naming
+- Business logic directly coupled to infrastructure/protocol code
+- Repeated logic that should be extracted to `/libraries` or `/services`
+
+Flag these as **Minor** unless the coupling creates a correctness or security risk (then **Important**).
 
 ## Anti-patterns
 

@@ -26,6 +26,23 @@ This project uses a layered theme architecture. Respect this order:
 
 CSS `@function` declarations (color harmonies, state helpers) live outside layers at top level.
 
+## Visual Philosophy
+
+The user's aesthetic is **clean, airy, and purposeful**. Study these traits before designing any component:
+
+- **Background:** white or near-white (`#fff` / `#f6f8fa`-level). No colored backgrounds except for status indicators.
+- **Whitespace first:** padding and margins are generous. If it looks cramped, add space before adding style.
+- **Borders:** 1px, light gray (`oklch(90% 0 0)`-level). No heavy outlines, no double borders.
+- **Shadows:** none or barely perceptible (`box-shadow: 0 1px 3px oklch(0% 0 0 / 8%)`). Depth comes from spacing, not shadows.
+- **Accent color:** one only. Blue (`oklch(55% 0.15 250)`-range) or green for success states. Never multiple competing accents.
+- **Icons:** outlined style only. Never filled/colorized icons. Icon + label always aligned on the same baseline.
+- **Typography:** neutral system font stack or clean sans-serif. Clear hierarchy (size + weight), no decorative fonts.
+- **Cards:** gentle rounding (`border-radius: 6px–8px`), consistent padding, no heavy drop shadows.
+- **Status communication:** always color + icon together. Never text alone, never color alone.
+- **Zero gradients.** Zero skeuomorphism. Zero animation excess — transitions at 150ms–200ms max, only when meaningful.
+
+When in doubt: remove. A component that does less but breathes more is always preferable.
+
 ## Output Format
 
 When designing UI (`doc`, components, layouts):

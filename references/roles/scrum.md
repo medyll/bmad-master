@@ -28,42 +28,117 @@ When adding a story (`sprint story`):
 - Output: `bmad/artifacts/stories/{id}.md`
 
 When showing status (`status`) or next action (`next`):
-- Use the **Read tool** on `./bmad/status.yaml` — that is the only tool call allowed
+
+**Data gathering (reads only):**
+- Read `./bmad/status.yaml`
+- Read sprint files (`bmad/artifacts/sprint-*.md`) and story files (`bmad/artifacts/stories/*.md`)
+- Read PRD/spec artifacts if they exist, to extract feature names and project vision
 - Do NOT run any CLI, script, shell command, or Node.js process
-- **Stop after displaying the template** — no snapshot, no tests, no chain, no writes
-- Render this exact template (fill from status.yaml fields and project artifacts):
 
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  📦 <project>
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  <1-sentence plain-language summary of what this project does and who it's for>
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Progress   [██████░░░░] <N>%   Phase: <planning|development|testing>
+**Output:** Render the FULL template below (both sections), then save it as `./bmad/artifacts/status-report.md` (overwrite). The .md file is the source of truth; the terminal output IS the .md content displayed verbatim. Stop after saving — no snapshot, no tests, no chain.
+
+---
+
+### Template to render
+
+```markdown
+# <project> — Status Report
+
+> <1-2 sentence pitch: what this project delivers and for whom — written so a CEO or investor understands instantly>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## Product Overview
+
+  Progress   [██████░░░░] <N>%   Phase: <planning|development|testing|release>
+
+### Features & Capabilities
+
+Translate every story/epic into a user-facing feature. Group by theme. Use plain language a marketing team or executive can scan in 30 seconds.
+
+  | Feature | Status | What it means for users |
+  |---------|--------|------------------------|
+  | <feature name> | ✅ Shipped / 🔨 Building / 📋 Planned | <1-line benefit in plain language> |
+  | <feature name> | ... | ... |
+
+### What's Ready Now
+<Bullet list of features/capabilities already working — describe the value, not the code>
+
+### What's Coming Next
+<Bullet list of upcoming features in priority order — describe the value, not the code>
+
+### Risks & Blockers
+<Bullet list, or "None identified." If blockers exist, explain impact in business terms>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## Development Details
+
   Sprint     <active sprint id or "none">
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  ✅ Done     <what was recently completed — in plain terms, not tech jargon>
-  🔨 Doing    <what is currently being built — in plain terms>
-  💡 Next     <next meaningful step — in plain terms>
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Stories    <completed>/<total> completed this sprint
-  Artifacts  <list key artifacts ready: PRD, spec, tests...>
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  bmad continue   — execute next step now
-  bmad test       — run test suite
-  bmad audit      — code quality check
-  bmad doc        — generate README
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Role       <active_role> → next: <next_role>
+  Next cmd   `<next_command>`
+
+### Current Sprint
+
+  ✅ Done     <what was recently completed — technical>
+  🔨 Doing    <what is currently being built — technical>
+  💡 Next     <next step — technical>
+  ⚠️ Blockers <technical blockers or "none">
+
+### Stories
+
+  | ID | Title | Status | Effort |
+  |----|-------|--------|--------|
+  | S1-01 | <title> | ✅ done | S |
+  | S1-02 | <title> | 🔨 in progress | M |
+  | S1-03 | <title> | ⬚ todo | L |
+
+  Progress: <completed>/<total> stories
+
+### Roadmap to Release
+
+Show every phase and sprint — what's done, current, and ahead. Full path to shipping.
+
+  #### Planning <✅ or 🔨 or ⬚>
+  - PRD: <done|pending>
+  - Architecture/Spec: <done|pending>
+
+  #### Development <✅ or 🔨 or ⬚>
+  - Sprint 1: <X/Y stories> <✅ or 🔨 or ⬚>
+  - Sprint 2: <X/Y stories> <✅ or 🔨 or ⬚>
+  - ...
+
+  #### Testing <✅ or 🔨 or ⬚>
+  - Unit tests: <status>
+  - E2E tests: <status>
+
+  #### Release <✅ or 🔨 or ⬚>
+  - Docs/README: <status>
+  - CHANGELOG: <status>
+  - Publish: <status>
+
+### Artifacts
+
+  | Artifact | Status |
+  |----------|--------|
+  | <name> | ✅ done / ⬚ pending |
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  bmad continue   — execute next step
+  bmad test       — run tests
+  bmad audit      — code quality
+  bmad doc        — generate docs
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-Rules:
-- Progress bar: 10 blocks, filled proportionally (e.g. 45% = 4-5 filled)
-- **Project summary line**: infer from PRD/spec artifacts if available, else from project name — write for a non-technical reader
-- **Done/Doing/Next**: translate technical work into plain language. "Implemented auth module" → "Users can now log in securely". "Writing unit tests" → "Verifying the core features work correctly"
-- If blockers exist, add `⚠️ Blocker: <plain-language reason>` after the Next line
-- Stories count: read from `sprints[active].stories` in status.yaml
-- Artifacts: only list ones with status `done` in status.yaml
-- No prose outside the template — the template IS the output
+### Rules
+
+- Progress bar: 10 blocks, filled proportionally
+- **Product Overview section**: written for executives and marketing. Translate technical stories into user-facing features with business value. No jargon. A non-technical person should understand the entire top section without asking questions.
+- **Features table**: map every story to a feature. Multiple stories implementing the same feature get merged into one row. The "What it means for users" column is the key — it describes the benefit, not the implementation.
+- **Development Details section**: technical and precise. Story IDs, file names, commands, test status — everything a developer needs.
+- **Roadmap**: reconstruct from status.yaml `phases` array and all sprint files. Show complete path from current state to release.
+- The .md file saved to `./bmad/artifacts/status-report.md` IS the source of truth. The terminal output displays the same content verbatim — no separate rendering.
 
 ## Autonomy
 

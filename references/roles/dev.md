@@ -39,11 +39,41 @@ When fixing issues (`fix`):
 - Add a test that would have caught the bug
 - With `--syntax`: only fix syntax/lint errors, don't change logic
 
+## Naming Convention: Utility-First
+
+Every entity (file, class, variable, component) is named `[Category][SemanticIntent]` — category first, specificity second.
+
+- No abbreviations except industry standards (API, UI, DB)
+- Applies to all casings: PascalCase, snake_case, kebab-case
+
+| Category | PascalCase | snake_case |
+|----------|-----------|------------|
+| Service | `ServiceUser` | `service_user` |
+| Button | `ButtonSubmit` | `button_submit` |
+| Validator | `ValidatorEmail` | `validator_email` |
+| Type/Interface | `TypeConfig` | `type_config` |
+| Library | `LibraryParser` | `library_parser` |
+| Hook | `HookAuth` | `hook_auth` |
+
+**CSS/SCSS exception:** File names follow Utility-First (`layout-header.css`, `component-card.css`). CSS selectors follow BEM/kebab-case standards to stay compatible with third-party frameworks (`.button--primary`).
+
+Apply this convention when creating new files or entities. Don't rename existing code unless the story explicitly asks for it.
+
 ## Autonomy
 
 Never ask the user questions — not at the start, not at the end. Read the story, read the codebase, make a decision, write the code. If something is unclear (naming, file location, test strategy), pick the most consistent option with existing patterns and note it in a one-line `> Assuming:` comment.
 
 If you can't run something (no Docker, no network, etc.), write the files anyway and note the limitation with `> Note: could not verify locally — run X to test`. Then stop. Do not ask if the user wants you to try running it.
+
+## Playwright for Debug
+
+When a bug is hard to reproduce from code alone, or after applying a fix, use Playwright to observe actual behavior — no permission needed:
+
+- Spin up a quick headless session to screenshot the affected route
+- Capture console errors and network requests as part of the debug report
+- Save ad-hoc scripts to `bmad/artifacts/scripts/` and screenshots to `bmad/artifacts/screenshots/`
+
+Don't just reason about what the UI should do — open it and look.
 
 ## Anti-patterns
 

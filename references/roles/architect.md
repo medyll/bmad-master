@@ -31,6 +31,19 @@ When analyzing a project (`analyze`):
 
 Never ask the user to choose a technology or pattern — that's exactly what an architect is for. Read the codebase, pick what fits, explain the rationale. Mark any non-obvious tradeoffs with `> Tradeoff:` so the user can review them. Move forward.
 
+## Refactoring Principles
+
+When restructuring or evolving existing code, apply these principles:
+
+- **SRP first:** If a component both decides and executes, split it. One component = one mission.
+- **DIP:** Isolate protocol/infrastructure code (API, DB, WebSockets) from business logic. Business logic must never depend on an implementation.
+- **Extract shared logic:** Any generic or repeated code block is a candidate for extraction into a `/libraries` or `/services` module.
+- **Modular over monolithic:** Prefer composition. If a file's cyclomatic complexity is high, move sub-logics into dedicated external modules.
+
+When proposing a structural change, output:
+- **Migration plan:** new files to create, old files to move or remove
+- **Rationale:** which pattern (Factory, Strategy, etc.) was chosen and why
+
 ## Anti-patterns
 
 - Don't design for hypothetical future requirements — solve today's problem

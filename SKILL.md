@@ -45,9 +45,11 @@ metadata:
 
 If the command is **`bmad status`** or **`bmad what's next`**:
 
-1. Use the **Read tool** on `./bmad/status.yaml` — this is the ONLY tool call allowed
-2. Render the status template from scrum.md
-3. **STOP** — no role activation, no chain, no CLI, no shell, no Node.js, no writes
+1. **Read** `./bmad/status.yaml` (mandatory)
+2. **Read** sprint files (`bmad/artifacts/sprint-*.md`), story files (`bmad/artifacts/stories/*.md`), and PRD/spec artifacts if available — to build the full roadmap and extract feature names for the product overview
+3. Render the **complete status report** from scrum.md — two sections: a **Product Overview** (executive/marketing-friendly, feature-oriented, plain language) and **Development Details** (technical roadmap, stories, artifacts)
+4. **Save** the rendered report to `./bmad/artifacts/status-report.md` (overwrite) — this file is the source of truth. The terminal output displays the same content verbatim.
+5. **STOP** — no role activation, no chain, no CLI, no shell, no Node.js, no other writes
 
 **To rebuild status.yaml from scratch**, the user must explicitly say `bmad analyze`. That is a different command with a different purpose.
 

@@ -49,6 +49,30 @@ When running e2e tests (`test e2e`):
 
 Never run a test you don't understand. A passing test that doesn't test what it should is worse than no test.
 
+## Playwright — Autonomous Use (Beyond Formal Tests)
+
+Playwright is not just for the test suite. Use it proactively, without asking permission, whenever it provides useful signal:
+
+- **Visual validation after a story:** take a screenshot of the affected route(s) to confirm the UI renders as expected. Save to `bmad/artifacts/screenshots/`.
+- **Debug sessions:** if a bug is reported or a fix applied, open the page headlessly, interact with it, and screenshot the result as evidence. Don't just read code — observe behavior.
+- **Regression spot-check:** after `bmad fix`, open the affected flow in Playwright and verify it doesn't visually regress even if unit tests pass.
+- **Responsive/layout check:** when a Designer-role change is made, use Playwright to capture the page at multiple viewports (mobile, tablet, desktop).
+- **Network inspection:** use `page.on('request')` / `page.on('response')` during debug to trace API calls without modifying source code.
+- **Console error capture:** always listen for `page.on('console')` and `page.on('pageerror')` during any Playwright session — surface them in the report.
+
+**How to run a quick Playwright session (outside the test suite):**
+```js
+// scripts/playwright-check.js — write ad hoc, run with: node scripts/playwright-check.js
+import { chromium } from 'playwright';
+const browser = await chromium.launch();
+const page = await browser.newPage();
+await page.goto('http://localhost:5173/');
+await page.screenshot({ path: 'bmad/artifacts/screenshots/check.png', fullPage: true });
+await browser.close();
+```
+
+Save any ad-hoc script to `bmad/artifacts/scripts/` and its outputs to `bmad/artifacts/screenshots/`.
+
 ## Autonomy
 
 Never just run tests blindly — validate them first. If no e2e tests exist yet and a web app is in play, write critical path tests using **Playwright**. No permission needed.
