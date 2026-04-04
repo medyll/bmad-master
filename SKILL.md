@@ -17,8 +17,16 @@ description: |-
   Note: publish, tag, and release are handled by CI — BMAD stops at passing tests.
 
 
-  Triggers: "bmad", "what's next", "continue", "status", "test", "audit"
+  Triggers: "bmad", "what's next", "continue", "status", "test", "audit",
+  "develop", "developer", "implement", "code this", "build this",
+  "design", "designer", "ui", "ux",
+  "architect", "architecture", "system design",
+  "review", "reviewer", "code review",
+  "tester", "qa", "write tests",
+  "plan", "product", "prd", "spec", "requirements",
+  "sprint", "scrum", "backlog"
   Use whenever you have project work to do. Just say it naturally.
+  Roles are also callable standalone — say "develop this" or "design this" without "bmad".
 argument-hint: "init, continue, status, what's next, analyze, test, audit, doc"
 compatibility:
   - mcp_v2
@@ -32,6 +40,43 @@ metadata:
 ---
 
 # BMAD – Project Orchestrator
+
+## Standalone Role Mode
+
+**When a role keyword is used WITHOUT "bmad"** (e.g. "develop this feature", "design a modal", "review this code", "architect a cache layer"), activate the role as a **standalone expert** — the role file is the source of truth for HOW to work.
+
+**Detection:** If the user's message matches a role keyword but does NOT contain "bmad", "continue", "init", "status", or "what's next" → enter Standalone Role Mode.
+
+| Keyword match | Role loaded | File |
+|---------------|------------|------|
+| develop, implement, code this, build this, fix this | **Developer** | `references/roles/dev.md` |
+| design, designer, ui, ux, css, component design | **Designer** | `references/roles/designer.md` |
+| architect, architecture, system design | **Architect** | `references/roles/architect.md` |
+| review, reviewer, code review, audit this | **Reviewer** | `references/roles/reviewer.md` |
+| test, tester, qa, write tests | **Tester** | `references/roles/tester.md` |
+| plan, product, prd, spec, requirements | **PM** | `references/roles/pm.md` |
+| sprint, scrum, backlog | **Scrum Master** | `references/roles/scrum.md` |
+
+**Standalone Role Activation:**
+1. **Read the role file** from `references/roles/<name>.md` — this is the source of truth
+2. **Print role tag** as first line: **[Developer]**, **[Designer]**, etc.
+3. **Check for BMAD context:** Look for `./bmad/status.yaml` in the current directory
+4. **Execute the task** using the role's perspective, priorities, and anti-patterns — no full chain protocol required
+5. **Integrate into BMAD flow if possible** (see below)
+
+**BMAD Flow Integration (best-effort):**
+When a `./bmad/` folder exists with a valid `status.yaml`, the standalone role MUST integrate its work back into the BMAD flow:
+- **Read** `status.yaml` and existing sprint/story artifacts for context
+- **Update `status.yaml`** after completion: set `active_role`, update `progress` if work advanced the project, and set `next_action`/`next_command`/`next_role` to reflect what should logically happen next
+- **Write artifacts** to `bmad/artifacts/` when the role produces outputs (e.g. a design spec, an architecture decision, a review report, a new story)
+- **Create or update story files** if the work maps to an existing story or justifies a new one (PM role decides format; Developer marks acceptance criteria progress)
+- **Do NOT start the chain** — integration is passive. Record what was done so that the next `bmad continue` picks up seamlessly
+
+When NO `./bmad/` folder exists, work purely standalone — no artifacts, no status tracking. The role file alone governs behavior.
+
+**Cross-skill usage:** Other skills in the workspace may reference these role files as their source of truth. The role files are the canonical knowledge base for each domain.
+
+---
 
 ## Core Behavior
 
