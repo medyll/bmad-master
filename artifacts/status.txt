@@ -1,0 +1,28 @@
+BMAD Status
+Found 25 projects in 158ms
+
+✅ plugable                   100% [DONE]  post-v1
+✅ css-base                   100% [DONE]  development
+✅ pseudo-html-stack          100% [DONE]  Phase 4 – Implementation (v0.5.0)
+✅ dash-git                    85% [OK]    release
+✅ idae-machine                95% [OK]    Release
+❓ idae-pnpm-release            ?% [???]   ?
+✅ idae                        85% [OK]    implementation
+❓ idae-idbql                   ?% [???]   analysis: done
+🔨 idae-machine                 0% [ACT]   current:
+✅ idae-router                100% [DONE]  Implementation
+❓ idae-slotui                  ?% [???]   implementation
+⚠️ idae-stator                 60% [WRN]   development
+❓ idae-sync                    ?% [???]   phase-2-sync-modes
+✅ qoolie                     100% [DONE]  Done
+✅ latent-line                 89% [OK]    development
+✅ sive                       100% [DONE]  - name: planning
+✅ sonar-zone                 100% [DONE]  current:
+✅ domus                       85% [OK]    release
+✅ idae-dashboard             100% [DONE]  phase_4_implementation
+❓ empty-project                ?% [???]   phase_1_analysis
+✅ project-alpha              100% [DONE]  phase_3_implementation
+✅ project-beta               100% [DONE]  phase_2_planning
+✅ project-gamma              100% [DONE]  phase_4_implementation
+⚠️ rustine                     63% [WRN]   ?
+✅ wollama                    100% [DONE]  release

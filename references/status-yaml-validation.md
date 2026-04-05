@@ -22,6 +22,18 @@ phases:                          # (required) exactly these 4 entries, in this o
   - name: release
     status: upcoming
 
+marketing:                       # (required) max 4 lines — marketing-facing project state
+  - "Landing page copy ready for review"
+  - "Feature X demo-ready for stakeholders"
+
+product:                         # (required) max 4 lines — product-facing project state
+  - "Core user flow implemented and tested"
+  - "Settings page blocked on design review"
+
+far_vision:                      # (required) max 4 lines — long-term strategic direction
+  - "Multi-tenant support planned for Q3"
+  - "Mobile app feasibility study next sprint"
+
 artifacts:                       # (optional) keys are artifact names, values are status
   prd: done                      # one of: done | in_progress | missing
   architecture: done
@@ -33,9 +45,78 @@ sprints:                         # (optional) array of sprint objects
     stories: ["S1-01", "S1-02"]  # array of story IDs, pattern: S{sprint}-{seq:02d}
 ```
 
+**Dimension rules:**
+- `marketing`: What matters for external communication — demos, copy, launch readiness. Max 4 bullet points.
+- `product`: What matters for product decisions — user flows, blockers, feature completeness. Max 4 bullet points.
+- `far_vision`: Strategic direction beyond the current sprint — future features, long-term architecture, research. Max 4 bullet points.
+- All three dimensions are **updated at the end of every action** alongside other status fields.
+
 **Story ID format:** `S{sprint number}-{sequence:02d}`. Example: sprint 1, story 3 = `S1-03`. Sprint 12, story 1 = `S12-01`.
 
-**When to update:** After every model command. At minimum update `active_role`, `next_action`, `next_command`, and `next_role`. Update `progress` and `phase` when work meaningfully advances the project.
+**When to update:** After every model command (end of action). At minimum update `active_role`, `next_action`, `next_command`, `next_role`, and the three dimensions. Update `progress` and `phase` when work meaningfully advances the project.
+
+---
+
+## YAML Formatting Rules (CRITICAL)
+
+The status.yaml is frequently corrupted by bad formatting. Follow these rules **exactly**:
+
+**Quoting:**
+- ✅ Always double-quote string values that contain special chars: `:`, `#`, `{`, `}`, `[`, `]`, `,`, `&`, `*`, `?`, `|`, `-`, `<`, `>`, `=`, `!`, `%`, `@`, `\`
+- ✅ Always double-quote `next_action`, `next_command`, and dimension entries (they often contain special chars)
+- ✅ Bare words are OK for simple values: `phase: development`, `active_role: dev`
+- ❌ Never use single quotes — always double quotes
+- ❌ Never use block scalars (`>-`, `|-`) in status.yaml — use inline quoted strings only
+
+**Indentation:**
+- ✅ Always use exactly 2 spaces for indentation
+- ❌ Never use tabs
+- ❌ Never mix indentation levels
+
+**Arrays:**
+- ✅ List items use `- ` (dash + space) at the correct indent level
+- ✅ Inline arrays for short lists: `stories: ["S1-01", "S1-02"]`
+- ❌ Never leave a trailing comma in inline arrays
+
+**Common mistakes to avoid:**
+```yaml
+# ❌ BAD — unquoted colon in value
+next_action: Implement S1-02: add modal component
+
+# ✅ GOOD
+next_action: "Implement S1-02: add modal component"
+
+# ❌ BAD — inconsistent indentation
+phases:
+  - name: planning
+     status: done
+
+# ✅ GOOD
+phases:
+  - name: planning
+    status: done
+
+# ❌ BAD — block scalar (will bleed or break)
+marketing: >-
+  Landing page ready
+
+# ✅ GOOD
+marketing:
+  - "Landing page ready"
+
+# ❌ BAD — missing quotes on special chars
+far_vision:
+  - Multi-tenant support: Q3 target
+
+# ✅ GOOD
+far_vision:
+  - "Multi-tenant support: Q3 target"
+```
+
+**Post-write verification:** After every status.yaml write, re-read the file and check:
+1. No YAML syntax errors (mismatched quotes, bad indentation)
+2. All required fields present
+3. `next_command` / `next_role` in sync
 
 ---
 

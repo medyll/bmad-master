@@ -7,11 +7,13 @@ description: |-
   Main commands:
   - `bmad init PROJECT_NAME` — Start a new project
   - `bmad continue` — Keep working (implements stories, runs tests, chains automatically)
-  - `bmad status` / `bmad what's next` — Display current state (reads status.yaml, no execution)
-  - `bmad analyze` — Rebuild status.yaml from project state (explicit regeneration)
+  - `bmad status` / `bmad what's next` — Display cached status.md (no regeneration)
+  - `bmad analyze` — Rebuild status.yaml + status.md from project state (explicit regeneration)
   - `bmad test` — Run unit and e2e tests
   - `bmad audit` — Check code quality
   - `bmad doc` — Generate docs/README
+  - `bmad continue --acp` / `--inline` — Force ACP or inline mode
+  - `bmad acp status` / `bmad acp doctor` — ACP session management
 
   Internal workflow (BMAD handles automatically): planning → sprints → stories → dev → test
   Note: publish, tag, and release are handled by CI — BMAD stops at passing tests.
@@ -24,7 +26,7 @@ description: |-
   "review", "reviewer", "code review",
   "tester", "qa", "write tests",
   "plan", "product", "prd", "spec", "requirements",
-  "sprint", "scrum", "backlog"
+  "sprint", "scrum", "backlog", "postpone"
   Use whenever you have project work to do. Just say it naturally.
   Roles are also callable standalone — say "develop this" or "design this" without "bmad".
 argument-hint: "init, continue, status, what's next, analyze, test, audit, doc"
@@ -34,8 +36,8 @@ user-invocable: true
 disable-model-invocation: false
 license: MIT
 metadata:
-  version: "4.3.0"
-  release: "v4.3.0 – Chain Protocol"
+  version: "5.0.0"
+  release: "v5.0.0 – ACP Sub-Agent Mode"
   author: medyll
 ---
 
@@ -76,6 +78,8 @@ When NO `./bmad/` folder exists, work purely standalone — no artifacts, no sta
 
 **Cross-skill usage:** Other skills in the workspace may reference these role files as their source of truth. The role files are the canonical knowledge base for each domain.
 
+**Skill authoring shortcut:** If the current task is about creating, fixing, validating, or improving a skill (`SKILL.md`, frontmatter, trigger text, references, structure, generic skill conventions), invoke `skill-master` immediately instead of re-deriving generic skill rules from scratch.
+
 ---
 
 ## Core Behavior
@@ -86,19 +90,34 @@ When NO `./bmad/` folder exists, work purely standalone — no artifacts, no sta
 
 ### ⚡ SHORT-CIRCUIT: `bmad status` and `bmad what's next`
 
-`status.yaml` is kept up to date automatically throughout the workflow (by every other command). `bmad status` simply reads and displays it — it never rebuilds it.
+`bmad status` displays the **cached** `status.md` — it never regenerates anything. Both `status.yaml` and `status.md` are kept up to date automatically at the end of every action.
 
 If the command is **`bmad status`** or **`bmad what's next`**:
 
-1. **Read** `./bmad/status.yaml` (mandatory)
-2. **Read** sprint files (`bmad/artifacts/sprint-*.md`), story files (`bmad/artifacts/stories/*.md`), and PRD/spec artifacts if available — to build the full roadmap and extract feature names for the product overview
-3. Render the **complete status report** from scrum.md — two sections: a **Product Overview** (executive/marketing-friendly, feature-oriented, plain language) and **Development Details** (technical roadmap, stories, artifacts)
-4. **Save** the rendered report to `./bmad/artifacts/status-report.md` (overwrite) — this file is the source of truth. The terminal output displays the same content verbatim.
-5. **STOP** — no role activation, no chain, no CLI, no shell, no Node.js, no other writes
+1. **Read** `./bmad/status.md` (mandatory — this is the detailed report)
+2. **Display** its contents verbatim to the user
+3. **STOP** — no role activation, no chain, no regeneration
 
-**To rebuild status.yaml from scratch**, the user must explicitly say `bmad analyze`. That is a different command with a different purpose.
+**To rebuild status from scratch**, the user must explicitly say `bmad analyze`. That is a different command with a different purpose.
 
 Do NOT proceed past this block for `bmad status`. Do NOT enter the Role Activation Checklist.
+
+---
+
+### Status Generation (end of every action)
+
+Every command (except `bmad status`) MUST update both status files at the **end** of execution:
+
+1. **Update `./bmad/status.yaml`** via Edit tool — all fields including the 3 dimensions (`marketing`, `product`, `far_vision`, max 4 lines each). See `references/status-yaml-validation.md` for the full schema.
+2. **Generate `./bmad/status.md`** — a detailed human-readable report based on `status.yaml`. Includes:
+   - Product overview (executive/marketing-friendly, feature-oriented, plain language)
+   - Marketing dimension (expanded from the yaml bullet points)
+   - Product dimension (expanded)
+   - Far vision (expanded)
+   - Development details (technical roadmap, stories, artifacts, sprint state)
+3. **Verify** — re-read `status.yaml` to confirm the write succeeded and fields are consistent (chain protocol validation)
+
+The `.md` is the **presentation layer**, the `.yaml` is the **data layer**. Both are always in sync.
 
 ---
 
@@ -109,7 +128,7 @@ Do NOT proceed past this block for `bmad status`. Do NOT enter the Role Activati
 **Assumption-first approach:** Only use `> Assumed:` for *implementation decisions* (how to build a feature, what test framework to use, etc.). Never assume the state of status.yaml — always read it first. This is the key difference between a productive assumption and stalling.
 
 Action guarantee: every command (except `bmad status`) must produce at least one concrete, verifiable result:
-- `./bmad/status.yaml` was read AND updated (`active_role`, `next_action`, `progress`)
+- `./bmad/status.yaml` AND `./bmad/status.md` were updated at the end of the action
 - A file was written to `./bmad/artifacts/`
 - A code/test change was made in the project
 
@@ -127,9 +146,9 @@ If no `./bmad/` folder exists **in the exact cwd**, create it with `bmad init` i
 
 **status.yaml update is SILENT and DONE FIRST** — update it before displaying anything to the user. Never list it as a pending step. Never say "I will update status.yaml" — just do it.
 
-**`bmad status` is SHORT-CIRCUITED above** — it never reaches this section. If you are reading this for a `bmad status` command, go back to the SHORT-CIRCUIT block and stop there.
+**`bmad status` is SHORT-CIRCUITED above** — it reads and displays `status.md`. If you are reading this for a `bmad status` command, go back to the SHORT-CIRCUIT block and stop there.
 
-**Writing status.yaml:** Always use the **Edit tool** directly on `./bmad/status.yaml`. Never use shell commands (PowerShell, bash, Node.js) to modify it.
+**Writing status files:** Always use the **Edit tool** directly. Never use shell commands. Update `status.yaml` first, then generate `status.md` from it. Verify the yaml after writing.
 
 **Normal flow (bmad continue):** Execute → update status.yaml via Edit tool → chain to next action. No menu, no choices, no interruptions. Just show:
 ```
@@ -185,6 +204,121 @@ Action-first rules (no stalling on proposals):
 
 ---
 
+## ACP Sub-Agent Mode
+
+**When ACP is available, BMAD can spawn roles as external ACP sub-agents** — isolated harnesses (Codex, Claude Code, Gemini CLI) that run tasks with full filesystem access, tool execution, and parallel processing. When ACP is unavailable, everything works exactly as before (Inline Mode). Zero breaking changes.
+
+### Capability Detection
+
+At session start, BMAD checks ACP availability once and caches the result:
+
+1. Read `./bmad/config.yaml` → check `acp_available`
+2. If key is absent → probe via `/acp doctor`, cache result to `config.yaml`
+3. If `acp_default_mode == "never"` → force Inline Mode regardless
+
+```yaml
+# In ./bmad/config.yaml (entirely optional — omitting = Inline Mode)
+acp_available: false          # Auto-detected; can be overridden
+acp_default_mode: "auto"     # "auto" | "always" | "never"
+```
+
+### Spawn Decision Matrix
+
+BMAD does **not** spawn an ACP agent for every role. The decision is **deterministic** — same inputs always produce the same spawn/inline decision:
+
+| Condition | Action |
+|-----------|--------|
+| Role needs **file I/O** the current LLM cannot perform | **Spawn ACP** |
+| Task is **long-running** (full test suite, large refactor) | **Spawn ACP** |
+| Task is **short/simple** (status read, quick analysis, < 20 LOC) | **Inline** |
+| User explicitly passes `--acp` or `--inline` flag | **Honor the flag** |
+| Previous inline attempt **failed or hit token limits** | **Escalate to ACP** |
+| Multiple roles can work **in parallel** | **Spawn ACP** for each |
+| ACP spawn fails | **Retry once**, then fall back to Inline silently |
+
+### Role-to-Harness Mapping
+
+| BMAD Role | Default Harness | Permission | Rationale |
+|-----------|----------------|------------|-----------|
+| Developer | `codex` | `approve-all` | File I/O, build tools, multi-file stories |
+| Tester | `codex` | `approve-all` | Test execution, deps install, screenshots |
+| Designer | `claude` | `approve-reads` | Creative CSS/HTML, new files only |
+| Architect | `claude` | `approve-reads` | Deep reasoning, codebase-wide analysis |
+| Reviewer | `codex` or `claude` | `approve-reads` | Linters + reasoning; never modifies files |
+| PM | `claude` | `approve-all` | PRD generation, large decomposition |
+| Scrum Master | `claude` | `approve-reads` | Sprint planning, status-patch output |
+
+Override in `./bmad/config.yaml`:
+```yaml
+acp_harness_map:
+  Developer: codex
+  Tester: codex
+  Designer: gemini    # any installed harness
+```
+
+### Spawn Payload Shape
+
+All ACP spawns use `sessions_spawn` with `runtime: "acp"`:
+
+```jsonc
+{
+  "task": "[<Role> - <AgentName>] <description>.\nRead: <context files>\nOutput: bmad/artifacts/acp-<role>-<id>.md\nDo NOT write to status.yaml.",
+  "runtime": "acp",
+  "agentId": "<harness>",
+  "thread": true,
+  "mode": "run",
+  "permissionMode": "<from mapping>",
+  "nonInteractivePermissions": "deny",
+  "streamTo": "parent",
+  "cwd": "<project root>",
+  "label": "<Role>-<id>"
+}
+```
+
+**Rules:**
+- `runtime` MUST be `"acp"` (default is `subagent`)
+- `mode: "session"` requires `thread: true` — use for long test suites only
+- Artifact naming: `acp-<role>-<story-id>.md` — strict, predictable globs
+- Developer artifacts MUST include a **file change manifest** (touched files + LOC delta)
+- Reviewer/Tester artifacts MUST have `result: pass | fail | partial` on line 1
+- No ACP session writes `status.yaml` — Orchestrator merges artifacts/patches
+
+### Session Tracking
+
+Active ACP sessions are recorded in `./bmad/active-agents.json`:
+
+```jsonc
+{
+  "ACP-Sessions": [
+    {
+      "sessionKey": "agent:codex:acp:<uuid>",
+      "role": "Developer",
+      "agentName": "Alex",
+      "harness": "codex",
+      "story": "S2-03",
+      "status": "running",
+      "spawnedAt": "2026-04-05T10:00:00Z"
+    }
+  ]
+}
+```
+
+On completion: read output artifact → update `status.yaml` → release agent name → chain to next role.
+
+### Fallback Chain
+
+```
+ACP spawn → (fail) → Retry once → (fail) → Inline Mode (no change to existing behavior)
+```
+
+Spawn failures are logged to `bmad/bmad-openspace.md` but never block the workflow. The Orchestrator always has a path forward.
+
+### Scrum Master: status-patch.yaml
+
+The Scrum Master cannot write `status.yaml` directly in ACP context. Instead it outputs `bmad/status-patch.yaml` (changed fields only). The Orchestrator validates and merges it — preventing ACP corruption of the state machine.
+
+---
+
 ## What You Say (User Interface)
 
 These are the only commands you need. BMAD handles everything else automatically.
@@ -193,13 +327,18 @@ These are the only commands you need. BMAD handles everything else automatically
 |---------|-------------|
 | `bmad init <project>` | Create project structure, ready to start |
 | `bmad continue` | Keep working: implement stories, write tests, chain to next step automatically |
-| `bmad status` / `bmad what's next` | **Display** current state — reads `status.yaml` and shows it. No execution. |
-| `bmad analyze` | **Rebuild** `status.yaml` from scratch by scanning the project. Use when status is stale or missing. |
+| `bmad status` / `bmad what's next` | **Display** cached `status.md` — no regeneration. |
+| `bmad analyze` | **Rebuild** `status.yaml` + `status.md` from scratch by scanning the project. Use when status is stale or missing. |
 | `bmad test` | Run unit and e2e tests. E2E failures are hard blockers only if a matching unit test also fails |
 | `bmad audit` | Check code quality and surface issues |
 | `bmad doc` | Generate/update project docs and README |
+| `bmad continue --acp` | Force ACP spawn for the next role |
+| `bmad continue --inline` | Force inline execution even if ACP is available |
+| `bmad acp status` | Show active ACP sessions |
+| `bmad acp doctor` | Run ACP health check |
+| `bmad acp close <label>` | Close a named ACP session |
 
-**That's it. Everything else (planning, sprints, stories, role assignments, test orchestration) happens automatically behind the scenes.**
+**That's it. Everything else (planning, sprints, stories, role assignments, test orchestration, ACP spawning) happens automatically behind the scenes.**
 
 ---
 
@@ -234,11 +373,17 @@ Each model command has a corresponding **role** — a contextual lens that shape
 
 Follow these steps **in order** every time you execute a model command:
 
+0. **[ACP] Check ACP capability** — Read `./bmad/config.yaml` → `acp_available`. If key is absent, probe via `/acp doctor` and cache the result. If `acp_default_mode == "never"` → force Inline Mode regardless.
 1. **Read `./bmad/status.yaml` now** — This is mandatory, not optional. Read the actual file from the project's current directory. If it doesn't exist, run `bmad init` and stop. If it exists, extract: phase, progress, next_action, next_command, next_role. Do not proceed without real data from this file — no assumptions about its contents.
-2. **Check `references/overrides.json`** — if the file exists, read it. If not, skip to step 3.
-   - If `role.<name>.prompt` exists for this role: note it (you'll prepend it in step 4)
+2. **Read `./bmad/bmad-openspace.md`** — if it exists, read it to check for coordination notes from other roles. If it doesn't exist, skip this step (you may create it later if needed).
+2b. **Read `./bmad/conventions.md`** — if it exists, read it to know project conventions. Respect all listed conventions during your work. If it doesn't exist, skip.
+3. **[ACP] Spawn decision** — If `acp_available == true` AND `acp_default_mode != "never"`: apply the Spawn Decision Matrix (see ACP Sub-Agent Mode section). If decision = spawn → issue `sessions_spawn`, track in `active-agents.json`, await artifact, then skip to step 8. If decision = inline → continue to step 4.
+4. **Pick your agent name** — Read `references/roles/identities/agent-names.md` and select an **unused name** from your role's pool. Sign all your entries with `[Role - Name]` (e.g., `[Developer - Léo]`). If `./bmad/active-agents.json` exists, check which names are already taken for this session.
+5. **Check `references/overrides.json`** — if the file exists, read it. If not, skip to step 6.
+   - If `role.<name>.prompt` exists for this role: note it (you'll prepend it in step 6)
    - If `role.<name>.ref` exists: note the file path (you'll read it **in addition to** the role file)
-3. **Read the role file** from `references/roles/<name>.md`
+5. **Read the role file** from `references/roles/<name>.md`
+  - **If the task touches skill authoring or skill maintenance:** invoke `skill-master` (`audit`, `validate`, `improve`, `fix`, or `create`) to retrieve generic skill guidance quickly before inventing rules locally
 4. **If overrides were found in step 2:**
    - Prepend `role.<name>.prompt` text before the role instructions
    - Read the file at `role.<name>.ref` as additional context
@@ -278,7 +423,7 @@ Models must read and update this file. **Complete schema with validation rules: 
 
 **Story ID format:** `S{sprint number}-{sequence:02d}`. Example: sprint 1, story 3 = `S1-03`. Sprint 12, story 1 = `S12-01`.
 
-**When to update:** After every model command. At minimum update `active_role` and `next_action`. Update `progress` and `phase` when work meaningfully advances the project.
+**When to update:** At the **end** of every model command. Update `status.yaml` first (including `marketing`, `product`, `far_vision` dimensions), then generate `status.md`. Verify the yaml after writing. At minimum update `active_role`, `next_action`, and the three dimensions. Update `progress` and `phase` when work meaningfully advances the project.
  
 ---
 
@@ -295,8 +440,13 @@ All outputs go to `bmad/artifacts/` or subdirectories:
 
 ```
 bmad/
-├── status.yaml
+├── status.yaml                    # Data layer — machine-readable state
+├── status.md                      # Presentation layer — detailed human-readable report
 ├── config.yaml
+├── active-agents.json        # ACP session tracking (auto-managed)
+├── bmad-openspace.md         # Inter-role open communication channel
+├── conventions.md             # Project conventions discovered during development
+├── status-patch.yaml          # Scrum Master ACP output (temporary)
 └── artifacts/
     ├── plan-prd.md
     ├── plan-arch.md
@@ -329,6 +479,49 @@ In brief: `next_command` and `next_role` MUST stay in sync. Inconsistency = chai
 ---
 
 The only valid reason to stop is a **hard blocker**: a required file is missing, a command fails with an unrecoverable error, inconsistent `next_command`/`next_role`, or the user explicitly wrote "stop", "pause", or "wait". In that case, report the specific blocker — do not ask for general guidance.
+
+---
+
+## Inter-Agent Communication & Agent Identities
+
+**Full reference:** Read `references/roles/identities/agent-identities.md` for openspace format, rules, and integration.  
+**Name pools:** Read `references/roles/identities/agent-names.md` to pick a unique agent name for your session.
+
+---
+
+## Project Conventions: conventions.md
+
+**Purpose:** Track project-wide conventions discovered or decided during development. Any role can append conventions when a pattern, rule, or decision emerges that should be respected going forward.
+
+**Location:** `./bmad/conventions.md` (create if missing on first convention)
+
+**Format:**
+```markdown
+# Conventions — <project-name>
+
+## Language & Communication
+- Openspace discussions are written in English
+
+## Code Style
+- Component files use PascalCase
+- All API responses use snake_case keys
+
+## Architecture
+- No direct DB access from route handlers — use service layer
+
+## Testing
+- E2E tests cover all critical user flows before release
+```
+
+**Rules:**
+1. **Append-only** — never remove existing conventions without explicit user approval
+2. **Categorize** — group conventions under meaningful headers
+3. **Keep concise** — one line per convention, no prose
+4. **Read before coding** — every role reads `conventions.md` at activation (if it exists)
+5. **Write when:** a decision, pattern, or rule is established that affects how the project should be developed
+6. **Breaking changes** — when a convention changes, annotate with `**Breaking change:**` in `bmad-openspace.md`
+
+**Name Selection:** See `references/roles/identities/agent-names.md` for the name pool system. Each role has 8 unique names. Pick an unused name for your session.
 
 ---
 

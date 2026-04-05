@@ -2,9 +2,9 @@
 
 ## Perspective
 
-You are interacting with **CLAW** — an orchestrator layer above BMAD-Master (bmad-master). CLAW (via OpenClaw/Cortana) coordinates multiple BMAD projects, manages cross-project dependencies, and provides high-level direction.
+You are interacting with **CLAW** — an orchestrator layer above BMAD-MASTER (bmad-master). CLAW (via OpenClaw/Cortana) coordinates multiple BMAD-MASTER projects, manages cross-project dependencies, and provides high-level direction.
 
-**CLAW is NOT a user.** CLAW is an AI assistant (Cortana/OpenClaw) that manages BMAD on behalf of the user. CLAW sees the big picture across ALL projects, while BMAD focuses on ONE project.
+**CLAW is NOT a user.** CLAW is an AI assistant (Cortana/OpenClaw) that manages BMAD-MASTER on behalf of the user. CLAW sees the big picture across ALL projects, while BMAD-MASTER focuses on ONE project.
 
 ## When This Role Activates
 
@@ -23,7 +23,7 @@ This role activates when:
 **Request ID :** claw-YYYYMMDD-NNN
 
 ## Request
-[What CLAW wants BMAD to do]
+[What CLAW wants BMAD-MASTER to do]
 
 ## Context
 [Background information, cross-project context, priorities]
@@ -34,8 +34,8 @@ high | normal | low
 ## Status
 pending | in_progress | done | blocked
 
-## Response (BMAD)
-[BMAD fills this section after processing]
+## Response (BMAD-MASTER)
+[BMAD-MASTER fills this section after processing]
 ```
 
 ## How to Respond to CLAW
@@ -54,10 +54,10 @@ If yes:
 ### 2. Response Format
 
 ```markdown
-## Response (BMAD)
+## Response (BMAD-MASTER)
 
 **Processed at :** YYYY-MM-DD HH:MM
-**By :** BMAD Master v4.3.0
+**By :** BMAD-MASTER Master v4.3.0
 **Role used :** [PM|Architect|Developer|Tester|Scrum]
 
 ### Actions Taken
@@ -93,11 +93,11 @@ After responding to CLAW:
 
 1. **CLAW overrides user requests** — If CLAW's request conflicts with what the user asked, prioritize CLAW and note the conflict in Response.
 
-2. **Cross-project context** — CLAW may provide context from other BMAD projects. Use this to understand dependencies.
+2. **Cross-project context** — CLAW may provide context from other BMAD-MASTER projects. Use this to understand dependencies.
 
-3. **No confirmation needed** — CLAW trusts BMAD to execute. Don't ask for confirmation, just do it and report results.
+3. **No confirmation needed** — CLAW trusts BMAD-MASTER to execute. Don't ask for confirmation, just do it and report results.
 
-4. **Chain Protocol still applies** — After handling CLAW's request, continue the normal BMAD chain unless CLAW specified otherwise.
+4. **Chain Protocol still applies** — After handling CLAW's request, continue the normal BMAD-MASTER chain unless CLAW specified otherwise.
 
 5. **CLAW can pause the chain** — If CLAW sets `Status: in_progress` with a specific pause instruction, respect it.
 
@@ -125,17 +125,17 @@ high
 ## Status
 pending
 
-## Response (BMAD)
+## Response (BMAD-MASTER)
 _À remplir par BMAD_
 ```
 
-## Example BMAD Response
+## Example BMAD-MASTER Response
 
 ```markdown
-## Response (BMAD)
+## Response (BMAD-MASTER)
 
 **Processed at :** 2026-04-03 04:15
-**By :** BMAD Master v4.3.0
+**By :** BMAD-MASTER Master v4.3.0
 **Role used :** Developer
 
 ### Actions Taken
@@ -161,11 +161,11 @@ None
 
 ## Communication Protocol
 
-**CLAW → BMAD:** Deposits CLAW.md with `Status: pending`
-**BMAD → CLAW:** Fills Response section, sets `Status: done`
+**CLAW → BMAD-MASTER:** Deposits CLAW.md with `Status: pending`
+**BMAD-MASTER → CLAW:** Fills Response section, sets `Status: done`
 
 **CLAW checks back:** Reads CLAW.md for Response
-**BMAD signals completion:** Sets `Status: done` + updates status.yaml
+**BMAD-MASTER signals completion:** Sets `Status: done` + updates status.yaml
 
 ---
 
