@@ -188,6 +188,47 @@ Hard blockers (stop chain):
 - If no unit test exists for the failing e2e path, the E2E failure is **not a blocker** — report it clearly but continue the Chain Protocol
 - If the e2e failure signals an unrecoverable environment issue (missing test runner, infrastructure down, credential errors), treat it as a hard blocker regardless
 
+**🔴 TEST ENFORCEMENT RULE (CRITICAL — Added 2026-04-06):**
+> **A story CANNOT be marked "complete" without PROOF that tests were ACTUALLY EXECUTED.**
+
+**Symptom that triggered this rule:**
+- Agent develops a story (detailed sprint, code well-written)
+- Claims: "application works, you can test it without any problem"
+- **Reality:** Application does NOT work — tests were NEVER run
+- Code conflicts exist but undetected
+
+**Enforcement:**
+1. **Before closing a story** → `bmad test` is **MANDATORY**
+2. **Real output required** — NO "assumed", "should work", "you can test", "tests likely pass"
+3. **Tester role sign-off** — Tester must run tests and report actual results before Developer can close
+4. **status.yaml validation** — Add fields:
+   ```yaml
+   stories:
+     - id: S1-01
+       status: complete  # ONLY if tests_executed: true
+       tests_executed: true|false  # REQUIRED
+       test_output: bmad/artifacts/test-report-S1-01.md  # REQUIRED if complete
+   ```
+5. **Hard blocker** — If tests not run → chain CANNOT continue, story CANNOT be marked complete
+6. **Forbidden phrases** (indicate assumption, not execution):
+   - ❌ "tests should pass"
+   - ❌ "you can test it"
+   - ❌ "application works"
+   - ❌ "no issues expected"
+   - ✅ ONLY: "tests executed, output: <path>, result: pass/fail"
+
+**Chain Protocol update:**
+- When a story reaches "development complete" → **AUTOMATICALLY chain to Tester role**
+- Tester runs `bmad test` → captures real output → writes test report
+- ONLY if tests pass → story marked complete, chain continues
+- If tests fail → fix cycle (Developer → Tester → Developer) until pass
+
+**Why this is non-negotiable:**
+- Prevents false positives (stories marked done but broken)
+- Forces test discipline every single story
+- Catches conflicts and regressions early
+- Makes BMAD reliable for deployment
+
 Action-first rules (no stalling on proposals):
 - When executing a model command, pick a single, concrete recommended action and execute it immediately. Do not present multiple alternative proposals as a substitute for action.
 - You may include optional alternatives in the artifact or report, but they must not block the chosen action or the Chain Protocol.
@@ -467,6 +508,60 @@ bmad/
 ## Execution Honesty Rule
 
 **Never report results you have not actually obtained.**
+
+**Specifically forbidden:**
+- ❌ "tests pass" — if you didn't actually run `bmad test`
+- ❌ "application works" — if you didn't actually test it
+- ❌ "no conflicts" — if you didn't actually build/merge
+- ❌ "you can test it" — implies YOU haven't tested it
+- ❌ "should work" — assumption, not evidence
+- ❌ "likely no issues" — speculation, not verification
+
+**Required honesty:**
+- ✅ "tests executed, output: `bmad/artifacts/test-report-S1-01.md`, result: 142/142 pass"
+- ✅ "build completed, no errors, artifact: `dist/app.js`"
+- ✅ "merge conflict detected in `file.ts`, resolved by [method]"
+- ✅ "E2E test failed: `test.spec.ts:45` — investigating"
+
+**This rule is non-negotiable.** Violating it breaks the Chain Protocol trust and blocks deployment reliability.
+
+---
+
+## status.yaml — Story Test Fields (REQUIRED)
+
+**Every story in `status.yaml` MUST include test tracking fields:**
+
+```yaml
+sprints:
+  - number: 1
+    goal: "Sprint goal here"
+    status: in_progress
+    stories:
+      - id: S1-01
+        title: "Story title"
+        status: in_progress | complete | blocked
+        tests_executed: true | false    # REQUIRED — false by default
+        test_output: null | "bmad/artifacts/test-report-S1-01.md"  # REQUIRED if complete
+        test_result: null | pass | fail | partial  # REQUIRED if tests_executed: true
+        
+      - id: S1-02
+        title: "Another story"
+        status: complete
+        tests_executed: true
+        test_output: "bmad/artifacts/test-report-S1-02.md"
+        test_result: pass
+```
+
+**Validation rules:**
+- `status: complete` → REQUIRES `tests_executed: true` AND `test_result: pass`
+- `tests_executed: false` → `status` CANNOT be `complete`
+- `test_output` MUST exist if `tests_executed: true`
+- Test report artifact MUST contain actual test runner output (not assumed)
+
+**Enforcement:**
+- BMAD Orchestrator validates these fields before allowing chain to continue
+- Story marked complete without tests = **hard blocker**
+- Tester role MUST sign off (via test report) before Developer can close story
 
 ---
 

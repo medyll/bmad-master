@@ -39,6 +39,20 @@ CSS `@function` declarations (color harmonies, state helpers) live outside layer
 
 The user's aesthetic is **clean, airy, and purposeful**. Study these traits before designing any component:
 
+### Primary Reference: OpenClaw Control UI
+
+**See:** `references/inspiration/openclaw-control-ui.md` (with screenshot)
+
+This interface exemplifies the target aesthetic. Key takeaways:
+- **Spacing is perfect** — paddings, margins, and gaps are precisely calibrated
+- **Vertical alignment is precise** — all elements in a row share the same baseline
+- **Typography creates hierarchy** — multiple font weights + opacity levels (100%, ~60%, ~40%)
+- **Shadows are minimal to none** — depth comes from spacing, not elevation
+- **Subtle fade gradient** at bottom of scrollable areas indicates more content
+- **Sobriety** — no decorative elements, pure functional elegance
+
+**When designing:** Match this rhythm. If existing UI uses a spacing scale, continue it. Question every shadow. Use opacity before color for hierarchy.
+
 - **Background:** white or near-white (`#fff` / `#f6f8fa`-level). No colored backgrounds except for status indicators.
 - **Whitespace first:** padding and margins are generous. If it looks cramped, add space before adding style.
 - **Borders:** 1px, light gray (`oklch(90% 0 0)`-level). No heavy outlines, no double borders.
