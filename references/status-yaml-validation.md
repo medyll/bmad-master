@@ -11,6 +11,13 @@ next_action: "Implement S1-02"   # (required) string — free text describing th
 next_command: "bmad continue"    # (required) string — executable command (e.g. "bmad plan prd", "bmad sprint", "bmad continue", "bmad test unit")
 next_role: "dev"                 # (required) string — one of: pm | architect | dev | reviewer | tester | scrum | designer
 active_role: dev                 # (optional) one of: pm | architect | dev | reviewer | tester | scrum | designer
+last_updated: "2026-04-09"       # (required) ISO date YYYY-MM-DD — updated after every action
+
+dependencies:                    # (optional) list of blocking or optional project dependencies
+  - project: other-project       # (required) project name
+    status: blocking             # (required) one of: blocking | optional
+    reason: "Need X before Y"    # (required) human-readable reason
+    satisfied: false             # (required) false until dependency is resolved
 
 phases:                          # (required) exactly these 4 entries, in this order
   - name: planning
@@ -53,7 +60,7 @@ sprints:                         # (optional) array of sprint objects
 
 **Story ID format:** `S{sprint number}-{sequence:02d}`. Example: sprint 1, story 3 = `S1-03`. Sprint 12, story 1 = `S12-01`.
 
-**When to update:** After every model command (end of action). At minimum update `active_role`, `next_action`, `next_command`, `next_role`, and the three dimensions. Update `progress` and `phase` when work meaningfully advances the project.
+**When to update:** After every model command (end of action). At minimum update `active_role`, `next_action`, `next_command`, `next_role`, `last_updated`, and the three dimensions. Update `progress` and `phase` when work meaningfully advances the project. Update `dependencies[].satisfied` when a dependency is resolved.
 
 ---
 

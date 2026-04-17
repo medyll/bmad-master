@@ -101,11 +101,6 @@
 
 ---
 
-## Flags
-- `--delay <seconds>`: Wait N seconds between steps (useful for rate-limiting).
-
----
-
 ## Output Location
 
 All artifacts go to `bmad/artifacts/` or its subdirectories.

@@ -1,5 +1,5 @@
 ---
-name: bmad-master
+name: bmad-method
 description: |-
   Project orchestrator — Your interface between you and the development workflow.
   Say what you want, BMAD handles the rest. No management overhead, no technical jargon.
@@ -42,6 +42,30 @@ metadata:
 ---
 
 # BMAD – Project Orchestrator
+
+## Terminology
+
+- **Command** (skill command): A user directive like `bmad status`, `develop this`, `bmad continue`. Interpreted by the LLM per this skill — not a script or binary.
+- **Shell command**: A terminal command executed via the run_shell_command tool (e.g., `npm test`, `git commit`).
+- **Instruction**: General guidance or constraint given to the LLM about how to behave (e.g., "always update status.yaml after an action", "never assume test results").
+- **Internal directive**: A BMAD-specific label like `bmad snapshot` or `bmad connector`. Still LLM-executed, not a real script — BMAD carries out the steps described here.
+
+---
+
+## ⚠️ LLM Commands vs CLI Commands — Critical Distinction
+
+**NEVER run BMAD skill commands in a shell.** They are LLM instructions, not executables.
+
+| Type | Examples | How to execute |
+|------|---------|----------------|
+| **LLM skill commands** | `bmad continue`, `bmad sprint`, `bmad plan prd`, `bmad status`, `bmad analyze`, `bmad init` | Say them as text — the LLM interprets and acts |
+| **CLI commands** | `node engine.mjs analyze`, `node engine.mjs update`, `node engine.mjs next` | Run in shell via Bash tool |
+
+Running `bmad continue` in a shell will fail with "Unknown command" — this is expected. It is not a bug in the CLI.
+
+The CLI (`engine.mjs`) is a utility script for specific operations (status generation, project scaffolding). It does **not** replace the LLM skill flow.
+
+---
 
 ## Standalone Role Mode
 
@@ -142,7 +166,7 @@ If no `./bmad/` folder exists **in the exact cwd**, create it with `bmad init` i
 
 ## Chain Protocol
 
-**After every model command, you MUST chain to the next action automatically.** This is not optional. It is the default behavior. Productivity first.
+**After every skill command, you MUST chain to the next action automatically.** This is not optional. It is the default behavior. Productivity first.
 
 **status.yaml update is SILENT and DONE FIRST** — update it before displaying anything to the user. Never list it as a pending step. Never say "I will update status.yaml" — just do it.
 
@@ -230,18 +254,13 @@ Hard blockers (stop chain):
 - Makes BMAD reliable for deployment
 
 Action-first rules (no stalling on proposals):
-- When executing a model command, pick a single, concrete recommended action and execute it immediately. Do not present multiple alternative proposals as a substitute for action.
+- When executing a skill command, pick a single, concrete recommended action and execute it immediately. Do not present multiple alternative proposals as a substitute for action.
 - You may include optional alternatives in the artifact or report, but they must not block the chosen action or the Chain Protocol.
 - Always update `bmad/status.yaml` after taking action to record progress and the chosen next step.
 
 **Why this works:** The chain is driven by `status.yaml`. After each task, update `next_action` in `status.yaml`, then read it back and act. The file is the single source of truth — not memory, not conversation history.
 
 **For small models especially:** The instruction is simple. When you finish a task, print `[DONE: X]`, print `[NEXT: Y]`, then do Y. No questions. No confirmation. Just do it.
-
----
-
-## Instructions
-
 
 ---
 
@@ -385,7 +404,7 @@ These are the only commands you need. BMAD handles everything else automatically
 
 ## How BMAD Works (Internal)
 
-These script commands run deterministically to manage state. **You never call these directly** — BMAD executes them as needed.
+These internal directives are carried out by BMAD as needed. **You never invoke them directly** — BMAD executes them automatically.
 
 | Internal Command | What it does |
 |---------|-------------|
@@ -396,7 +415,7 @@ These script commands run deterministically to manage state. **You never call th
 
 ## Roles
 
-Each model command has a corresponding **role** — a contextual lens that shapes how the model approaches the task. Role files are in `references/roles/` and must be read before executing model commands.
+Each skill command has a corresponding **role** — a contextual lens that shapes how the model approaches the task. Role files are in `references/roles/` and must be read before executing skill commands.
 
 | Role | File | Commands |
 |------|------|----------|
@@ -412,7 +431,7 @@ Each model command has a corresponding **role** — a contextual lens that shape
 
 ### Role Activation Checklist
 
-Follow these steps **in order** every time you execute a model command:
+Follow these steps **in order** every time you execute a skill command:
 
 0. **[ACP] Check ACP capability** — Read `./bmad/config.yaml` → `acp_available`. If key is absent, probe via `/acp doctor` and cache the result. If `acp_default_mode == "never"` → force Inline Mode regardless.
 1. **Read `./bmad/status.yaml` now** — This is mandatory, not optional. Read the actual file from the project's current directory. If it doesn't exist, run `bmad init` and stop. If it exists, extract: phase, progress, next_action, next_command, next_role. Do not proceed without real data from this file — no assumptions about its contents.
@@ -464,7 +483,7 @@ Models must read and update this file. **Complete schema with validation rules: 
 
 **Story ID format:** `S{sprint number}-{sequence:02d}`. Example: sprint 1, story 3 = `S1-03`. Sprint 12, story 1 = `S12-01`.
 
-**When to update:** At the **end** of every model command. Update `status.yaml` first (including `marketing`, `product`, `far_vision` dimensions), then generate `status.md`. Verify the yaml after writing. At minimum update `active_role`, `next_action`, and the three dimensions. Update `progress` and `phase` when work meaningfully advances the project.
+**When to update:** At the **end** of every skill command. Update `status.yaml` first (including `marketing`, `product`, `far_vision` dimensions), then generate `status.md`. Verify the yaml after writing. At minimum update `active_role`, `next_action`, and the three dimensions. Update `progress` and `phase` when work meaningfully advances the project.
  
 ---
 
@@ -623,4 +642,4 @@ The only valid reason to stop is a **hard blocker**: a required file is missing,
 ## What This Skill Is NOT
 - Does NOT invent tools or functions
 - Does NOT pretend to create files it doesn't really create
-- Does NOT require reference files for script commands (role files are required for model commands)
+- Does NOT require reference files for shell commands (role files cover all skill commands)

@@ -81,31 +81,13 @@ class Bmad {
       const require = createRequire(import.meta.url);
       return require('js-yaml');
     } catch {
-      this.err('yaml', 'js-yaml not found — run: node engine.mjs install');
-      process.exit(1);
+      throw new Error('js-yaml not found — run: node engine.mjs install');
     }
   }
  
 
 
 
-
-  // ── Walker ──────────────────────────────────────────────────────────────
-
-  async walk(dir, results = []) {
-    const SKIP = new Set(['node_modules', '.git', 'dist', 'build']);
-    const entries = await fs.readdir(dir, { withFileTypes: true });
-    for (const e of entries) {
-      if (SKIP.has(e.name)) continue;
-      const full = path.join(dir, e.name);
-      if (e.isDirectory()) {
-        await this.walk(full, results);
-      } else if (e.isFile() && e.name === 'status.yaml' && path.basename(path.dirname(full)) === 'bmad') {
-        results.push(full);
-      }
-    }
-    return results;
-  }
 
   // ── YAML parsers ────────────────────────────────────────────────────────
 
@@ -162,6 +144,7 @@ class Bmad {
 
   /**
    * init — create bmad/ project structure
+   * Workspace-first: checks for canonical template before using default
    */
   async init(bmadDirOverride) {
     const dir = this.bmadDir(bmadDirOverride);
@@ -185,7 +168,30 @@ class Bmad {
 
     const projectName = path.basename(this.cwd);
 
-    const statusYaml = `# BMAD Status — ${projectName}
+    // Canonical template lives inside the skill: templates/status-template.yaml
+    const canonicalTemplate = path.join(__dirname, '..', 'templates', 'status-template.yaml');
+    let statusYamlContent = '';
+    let templateSource = 'default';
+
+    try {
+      await fs.access(canonicalTemplate);
+      let templateContent = await fs.readFile(canonicalTemplate, 'utf8');
+      const today = this.dateStamp();
+      statusYamlContent = templateContent
+        .replace(/\{\{project_name\}\}/g, projectName)
+        .replace(/\{\{date\}\}/g, today);
+      templateSource = 'canonical';
+      this.log('init', `using canonical template from ${path.relative(this.cwd, canonicalTemplate)}`);
+    } catch (err) {
+      if (err.code !== 'ENOENT') {
+        this.log('init', `template read error: ${err.message}`);
+      }
+      templateSource = 'default';
+    }
+
+    if (templateSource === 'default') {
+      // Fallback to default template
+      statusYamlContent = `# BMAD Status — ${projectName}
 # This file is the single source of truth for project state.
 
 project: ${projectName}
@@ -210,6 +216,8 @@ artifacts: {}
 
 sprints: []
 `;
+      this.log('init', 'no canonical template found, using default');
+    }
 
     const configYaml = `# BMAD Config — ${projectName}
 
@@ -218,13 +226,17 @@ created: "${new Date().toISOString()}"
 stack: []
 `;
 
-    await fs.writeFile(path.join(dir, 'status.yaml'), statusYaml, 'utf8');
+    await fs.writeFile(path.join(dir, 'status.yaml'), statusYamlContent, 'utf8');
     await fs.writeFile(path.join(dir, 'config.yaml'), configYaml, 'utf8');
 
     this.log('init', `created bmad/ structure at ${path.relative(this.cwd, dir)}/`);
-    console.log('  - status.yaml (project state + Chain Protocol fields)');
+    console.log(`  - status.yaml (project state + Chain Protocol fields) [from ${templateSource} template]`);
     console.log('  - config.yaml (project settings)');
     console.log('  - artifacts/ (output directory)');
+    if (templateSource === 'default') {
+      console.log('\n💡 Tip: Copy the canonical template for future projects:');
+      console.log(`   cp ${path.join('workspace', 'templates', 'bmad', 'status-template.yaml')} <project>/bmad/status.yaml`);
+    }
     console.log('\nNext step: bmad plan prd');
   }
 
@@ -241,17 +253,14 @@ stack: []
     try {
       content = await fs.readFile(statusPath, 'utf8');
     } catch {
-      this.err('update', `No status.yaml found at ${statusPath}`);
-      console.log('Run `bmad init` to create a new project.');
-      process.exit(1);
+      throw new Error(`No status.yaml found at ${statusPath}. Run \`bmad init\` to create a new project.`);
     }
 
     let data;
     try {
       data = YAML.load(content);
     } catch (e) {
-      this.err('update', `Failed to parse status.yaml: ${e.message}`);
-      process.exit(1);
+      throw new Error(`Failed to parse status.yaml: ${e.message}`);
     }
 
     let updated = false;
@@ -278,8 +287,7 @@ stack: []
         console.log(`  - next_role: ${data.next_role}`);
         console.log(`  - active_role: ${data.active_role}`);
       } catch (e) {
-        this.err('update', `Failed to write status.yaml: ${e.message}`);
-        process.exit(1);
+        throw new Error(`Failed to write status.yaml: ${e.message}`);
       }
     } else {
       this.log('update', 'status.yaml already has all Chain Protocol fields');
@@ -288,6 +296,7 @@ stack: []
 
   /**
    * analyze — scan project and generate/update status.yaml
+   * Produces a complete Chain Protocol-compliant status.yaml
    */
   async analyze(bmadDirOverride) {
     const dir = this.bmadDir(bmadDirOverride);
@@ -299,15 +308,21 @@ stack: []
     let phase = 'planning';
     let progress = 0;
     let nextAction = 'Create a PRD with bmad plan prd';
+    let nextCommand = 'bmad plan prd';
+    let nextRole = 'pm';
 
     if (info.hasSrc) {
       phase = 'development';
       progress = 30;
       nextAction = 'Review code and create sprint with bmad sprint';
+      nextCommand = 'bmad sprint';
+      nextRole = 'scrum';
     }
     if (info.hasTests) {
       progress = 50;
       nextAction = 'Run tests with bmad test unit';
+      nextCommand = 'bmad test unit';
+      nextRole = 'tester';
     }
 
     // Check for existing artifacts
@@ -322,6 +337,7 @@ stack: []
     }
 
     const projectName = info.projectName || path.basename(this.cwd);
+    const today = this.dateStamp();
 
     const statusYaml = `# BMAD Status — ${projectName}
 # Auto-generated by bmad analyze
@@ -330,6 +346,10 @@ project: ${projectName}
 phase: ${phase}
 progress: ${progress}
 next_action: "${nextAction}"
+next_command: "${nextCommand}"
+next_role: "${nextRole}"
+active_role: "${nextRole}"
+last_updated: "${today}"
 
 detected:
   languages: [${Array.from(info.languages).map(l => `"${l}"`).join(', ')}]
@@ -352,6 +372,15 @@ phases:
   - name: release
     status: upcoming
 
+marketing:
+  - "Project initialized — status auto-detected"
+
+product:
+  - "Phase detected: ${phase} (${progress}%)"
+
+far_vision:
+  - "To be defined during planning phase"
+
 artifacts:
 ${Object.entries(hasArtifacts).map(([k, v]) => `  ${k}: ${v}`).join('\n')}
 
@@ -363,6 +392,7 @@ sprints: []
     console.log(`  Phase: ${phase} | Progress: ${progress}%`);
     console.log(`  Languages: ${Array.from(info.languages).join(', ') || 'unknown'}`);
     console.log(`  Next: ${nextAction}`);
+    console.log(`  Chain: next_command="${nextCommand}" next_role="${nextRole}"`);
   }
 
   /**
@@ -377,9 +407,7 @@ sprints: []
     try {
       content = await fs.readFile(statusPath, 'utf8');
     } catch {
-      this.err('status', `No status.yaml found at ${statusPath}`);
-      console.log('Run `bmad init` or `bmad analyze` first.');
-      process.exit(1);
+      throw new Error(`No status.yaml found at ${statusPath}. Run \`bmad init\` or \`bmad analyze\` first.`);
     }
 
     const data = YAML.load(content);
@@ -422,8 +450,7 @@ sprints: []
     try {
       content = await fs.readFile(statusPath, 'utf8');
     } catch {
-      this.err('next', `No status.yaml found. Run bmad init first.`);
-      process.exit(1);
+      throw new Error(`No status.yaml found. Run bmad init first.`);
     }
 
     const nextAction = this.parseNextAction(content, YAML);
@@ -478,8 +505,7 @@ sprints: []
 
     if (action === 'set') {
       if (!key || value === undefined) {
-        this.err('config', 'Usage: bmad config set <key> <value>');
-        process.exit(1);
+        throw new Error('Usage: bmad config set <key> <value>');
       }
       // Resolve relative paths to absolute for file references
       let resolvedValue = value;
@@ -489,8 +515,7 @@ sprints: []
           await fs.access(absPath);
           resolvedValue = absPath;
         } catch {
-          this.err('config', `File not found: ${absPath}`);
-          process.exit(1);
+          throw new Error(`File not found: ${absPath}`);
         }
       }
       this.setNestedKey(overrides, key, resolvedValue);
@@ -501,8 +526,7 @@ sprints: []
 
     if (action === 'unset') {
       if (!key) {
-        this.err('config', 'Usage: bmad config unset <key>');
-        process.exit(1);
+        throw new Error('Usage: bmad config unset <key>');
       }
       this.deleteNestedKey(overrides, key);
       await fs.writeFile(overridesPath, JSON.stringify(overrides, null, 2), 'utf8');
@@ -510,8 +534,7 @@ sprints: []
       return;
     }
 
-    console.error(`Unknown config action: ${action}\nUsage: bmad config <get|set|unset> [key] [value]`);
-    process.exit(1);
+    throw new Error(`Unknown config action: ${action}. Usage: bmad config <get|set|unset> [key] [value]`);
   }
 
   // Helpers for nested dot-notation keys (e.g. "role.designer.ref")
@@ -559,8 +582,7 @@ sprints: []
           shell: true,
         });
         if (res.status !== 0) {
-          this.err('install', `failed to install ${pkg}`);
-          process.exit(res.status || 1);
+          throw new Error(`Failed to install ${pkg}`);
         }
       }
     }
@@ -589,8 +611,7 @@ sprints: []
         await this.loadYaml();
         this.log('repair', 'yaml dependency installed successfully');
       } catch {
-        this.err('repair', 'yaml check failed');
-        process.exit(1);
+        throw new Error('yaml check failed');
       }
     }
 
@@ -608,8 +629,7 @@ sprints: []
     try {
       await fs.access(statusPath);
     } catch {
-      this.err('snapshot', `status.yaml not found at ${statusPath}`);
-      process.exit(1);
+      throw new Error(`status.yaml not found at ${statusPath}`);
     }
 
     const content = await fs.readFile(statusPath, 'utf8');
@@ -664,7 +684,7 @@ sprints: []
     const connector = {
       meta: {
         generated: new Date().toISOString(),
-        bmad_version: '4.0.0',
+        bmad_version: '5.0.0',
         project: config.name || path.basename(this.cwd),
         root: 'bmad/',
       },
@@ -839,7 +859,7 @@ sprints: []
       info.dependencies = info.dependencies.length ? info.dependencies.concat(deps) : deps;
     } catch {}
 
-    try { await fs.access(path.join(this.cwd, 'src')); info.hasSrc = true; info.languages.add('Source files'); } catch {}
+    try { await fs.access(path.join(this.cwd, 'src')); info.hasSrc = true; } catch {}
     try { await fs.access(path.join(this.cwd, 'tests')); info.hasTests = true; } catch {}
     try { await fs.access(path.join(this.cwd, 'test')); info.hasTests = true; } catch {}
 
@@ -859,7 +879,14 @@ sprints: []
       const templatePath = path.join(this.cwd, 'bmad', 'artifacts', 'docs', 'README.template.md');
       const fallback = path.join(__dirname, '..', 'references', 'readme-template.md');
       let tpl;
-      try { tpl = await fs.readFile(templatePath, 'utf8'); } catch { tpl = await fs.readFile(fallback, 'utf8'); }
+      try { tpl = await fs.readFile(templatePath, 'utf8'); } catch {}
+      if (!tpl) {
+        try { tpl = await fs.readFile(fallback, 'utf8'); } catch {}
+      }
+      if (!tpl) {
+        tpl = `# {{project_name}}\n\n## Installation\n\n\`\`\`\n<install-command>\n\`\`\`\n\n## Usage\n\n\`\`\`\n<example-command>\n\`\`\`\n`;
+        this.log('readme', 'no template available, using minimal inline template');
+      }
 
       const info = await this.analyzeProject();
 

@@ -1,4 +1,4 @@
-# bmad-master
+# bmad-method
 
 Project orchestrator — your interface between you and the development workflow.  
 Say what you want, BMAD handles the rest. No management overhead, no technical jargon.
