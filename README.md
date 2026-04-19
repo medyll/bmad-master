@@ -6,21 +6,21 @@ Say what you want, BMAD handles the rest. No management overhead, no technical j
 ## Quick Start
 
 ```
-bmad init my-project
-bmad continue
+bmad-init my-project
+bmad-continue
 ```
 
 ## Commands
 
 | Command | What it does |
 |---------|-------------|
-| `bmad init <project>` | Create project structure |
-| `bmad continue` | Implement stories, run tests, chain automatically |
-| `bmad status` | Display current state |
-| `bmad analyze` | Rebuild status from project state |
-| `bmad test` | Run unit and e2e tests |
-| `bmad audit` | Check code quality |
-| `bmad doc` | Generate docs and README |
+| `bmad-init <project>` | Create project structure |
+| `bmad-continue` | Implement stories, run tests, chain automatically |
+| `bmad-status` | Display current state |
+| `bmad-analyze` | Rebuild status from project state |
+| `bmad-test` | Run unit and e2e tests |
+| `bmad-audit` | Check code quality |
+| `bmad-doc` | Generate docs and README |
 
 ## How It Works
 

@@ -13,8 +13,8 @@ Short description: One-sentence summary of the project.
 
 ```
 # Example: clone and run
-git clone <repo-url> C:\Users\Mydde\.claude\skills\bmad-master
-cd C:\Users\Mydde\.claude\skills\bmad-master
+git clone <repo-url> C:\Users\Mydde\.claude\skills\bmad-method
+cd C:\Users\Mydde\.claude\skills\bmad-method
 # install
 <install-command>
 # run

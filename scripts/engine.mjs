@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * engine.mjs — Engine for BMAD unified script runner
+ * engine.mjs — Engine for BMAD ( now bmad-method) unified script runner
  *
  * Usage:
  *   node engine.mjs <command> [args]
