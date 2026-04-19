@@ -1,6 +1,6 @@
 # Agent Names by Role
 
-Each role has a pool of names. When a sub-agent activates, it picks an **unused** name from its role's pool for the current session. This ensures unique identification in DISCUSSION.md.
+Each role has a pool of names. When a role activates, it picks an **unused** name from its role's pool for the current session. This ensures unique identification in bmad-openspace.md.
 
 ## Name Pools
 
@@ -91,16 +91,4 @@ Waiting for Developer fix...
 
 ## Name Tracking
 
-Names in use should be tracked in `./bmad/active-agents.json` (created automatically):
-
-```json
-{
-  "session-2026-04-04": {
-    "Developer": ["Léo", "Manon"],
-    "Tester": ["Mathis"],
-    "Architect": ["Aurélien"]
-  }
-}
-```
-
-When a sub-agent completes its task, its name is released back to the pool.
+Names in use are tracked in the current session context. Once a role completes its task, its name is released back to the pool.

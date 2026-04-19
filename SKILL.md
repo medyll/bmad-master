@@ -37,7 +37,7 @@ disable-model-invocation: false
 license: MIT
 metadata:
   version: "5.0.0"
-  release: "v5.0.0 – ACP Sub-Agent Mode"
+  release: "v5.1.0"
   author: medyll
 ---
 
@@ -331,121 +331,6 @@ When called without argument, `bmad-run` reads `status.yaml` and picks the tight
 
 ---
 
-## ACP Sub-Agent Mode
-
-**When ACP is available, BMAD can spawn roles as external ACP sub-agents** — isolated harnesses (Codex, Claude Code, Gemini CLI) that run tasks with full filesystem access, tool execution, and parallel processing. When ACP is unavailable, everything works exactly as before (Inline Mode). Zero breaking changes.
-
-### Capability Detection
-
-At session start, BMAD checks ACP availability once and caches the result:
-
-1. Read `./bmad/config.yaml` → check `acp_available`
-2. If key is absent → probe via `/acp doctor`, cache result to `config.yaml`
-3. If `acp_default_mode == "never"` → force Inline Mode regardless
-
-```yaml
-# In ./bmad/config.yaml (entirely optional — omitting = Inline Mode)
-acp_available: false          # Auto-detected; can be overridden
-acp_default_mode: "auto"     # "auto" | "always" | "never"
-```
-
-### Spawn Decision Matrix
-
-BMAD does **not** spawn an ACP agent for every role. The decision is **deterministic** — same inputs always produce the same spawn/inline decision:
-
-| Condition | Action |
-|-----------|--------|
-| Role needs **file I/O** the current LLM cannot perform | **Spawn ACP** |
-| Task is **long-running** (full test suite, large refactor) | **Spawn ACP** |
-| Task is **short/simple** (status read, quick analysis, < 20 LOC) | **Inline** |
-| User explicitly passes `--acp` or `--inline` flag | **Honor the flag** |
-| Previous inline attempt **failed or hit token limits** | **Escalate to ACP** |
-| Multiple roles can work **in parallel** | **Spawn ACP** for each |
-| ACP spawn fails | **Retry once**, then fall back to Inline silently |
-
-### Role-to-Harness Mapping
-
-| BMAD Role | Default Harness | Permission | Rationale |
-|-----------|----------------|------------|-----------|
-| Developer | `codex` | `approve-all` | File I/O, build tools, multi-file stories |
-| Tester | `codex` | `approve-all` | Test execution, deps install, screenshots |
-| Designer | `claude` | `approve-reads` | Creative CSS/HTML, new files only |
-| Architect | `claude` | `approve-reads` | Deep reasoning, codebase-wide analysis |
-| Reviewer | `codex` or `claude` | `approve-reads` | Linters + reasoning; never modifies files |
-| PM | `claude` | `approve-all` | PRD generation, large decomposition |
-| Scrum Master | `claude` | `approve-reads` | Sprint planning, status-patch output |
-
-Override in `./bmad/config.yaml`:
-```yaml
-acp_harness_map:
-  Developer: codex
-  Tester: codex
-  Designer: gemini    # any installed harness
-```
-
-### Spawn Payload Shape
-
-All ACP spawns use `sessions_spawn` with `runtime: "acp"`:
-
-```jsonc
-{
-  "task": "[<Role> - <AgentName>] <description>.\nRead: <context files>\nOutput: bmad/artifacts/acp-<role>-<id>.md\nDo NOT write to status.yaml.",
-  "runtime": "acp",
-  "agentId": "<harness>",
-  "thread": true,
-  "mode": "run",
-  "permissionMode": "<from mapping>",
-  "nonInteractivePermissions": "deny",
-  "streamTo": "parent",
-  "cwd": "<project root>",
-  "label": "<Role>-<id>"
-}
-```
-
-**Rules:**
-- `runtime` MUST be `"acp"` (default is `subagent`)
-- `mode: "session"` requires `thread: true` — use for long test suites only
-- Artifact naming: `acp-<role>-<story-id>.md` — strict, predictable globs
-- Developer artifacts MUST include a **file change manifest** (touched files + LOC delta)
-- Reviewer/Tester artifacts MUST have `result: pass | fail | partial` on line 1
-- No ACP session writes `status.yaml` — Orchestrator merges artifacts/patches
-
-### Session Tracking
-
-Active ACP sessions are recorded in `./bmad/active-agents.json`:
-
-```jsonc
-{
-  "ACP-Sessions": [
-    {
-      "sessionKey": "agent:codex:acp:<uuid>",
-      "role": "Developer",
-      "agentName": "Alex",
-      "harness": "codex",
-      "story": "S2-03",
-      "status": "running",
-      "spawnedAt": "2026-04-05T10:00:00Z"
-    }
-  ]
-}
-```
-
-On completion: read output artifact → update `status.yaml` → release agent name → chain to next role.
-
-### Fallback Chain
-
-```
-ACP spawn → (fail) → Retry once → (fail) → Inline Mode (no change to existing behavior)
-```
-
-Spawn failures are logged to `bmad/bmad-openspace.md` but never block the workflow. The Orchestrator always has a path forward.
-
-### Scrum Master: status-patch.yaml
-
-The Scrum Master cannot write `status.yaml` directly in ACP context. Instead it outputs `bmad/status-patch.yaml` (changed fields only). The Orchestrator validates and merges it — preventing ACP corruption of the state machine.
-
----
-
 ## What You Say (User Interface)
 
 These are the only commands you need. BMAD handles everything else automatically.
@@ -462,13 +347,7 @@ These are the only commands you need. BMAD handles everything else automatically
 | `bmad-test` | Run unit and e2e tests. E2E failures are hard blockers only if a matching unit test also fails |
 | `bmad-audit` | Check code quality and surface issues |
 | `bmad-doc` | Generate/update project docs and README |
-| `bmad-continue --acp` | Force ACP spawn for the next role |
-| `bmad-continue --inline` | Force inline execution even if ACP is available |
-| `bmad-acp-status` | Show active ACP sessions |
-| `bmad-acp-doctor` | Run ACP health check |
-| `bmad-acp-close <label>` | Close a named ACP session |
-
-**That's it. Everything else (planning, sprints, stories, role assignments, test orchestration, ACP spawning) happens automatically behind the scenes.**
+**That's it. Everything else (planning, sprints, stories, role assignments, test orchestration) happens automatically behind the scenes.**
 
 ---
 
@@ -503,13 +382,10 @@ Each skill command has a corresponding **role** — a contextual lens that shape
 
 Follow these steps **in order** every time you execute a skill command:
 
-0. **[ACP] Check ACP capability** — Read `./bmad/config.yaml` → `acp_available`. If key is absent, probe via `/acp doctor` and cache the result. If `acp_default_mode == "never"` → force Inline Mode regardless.
 1. **Read `./bmad/status.yaml` now** — This is mandatory, not optional. Read the actual file from the project's current directory. If it doesn't exist, run `bmad-init` and stop. If it exists, extract: phase, progress, next_action, next_command, next_role. Do not proceed without real data from this file — no assumptions about its contents.
 2. **Read `./bmad/bmad-openspace.md`** — if it exists, read it to check for coordination notes from other roles. If it doesn't exist, skip this step (you may create it later if needed).
 2b. **Read `./bmad/conventions.md`** — if it exists, read it to know project conventions. Respect all listed conventions during your work. If it doesn't exist, skip.
-3. **[ACP] Spawn decision** — If `acp_available == true` AND `acp_default_mode != "never"`: apply the Spawn Decision Matrix (see ACP Sub-Agent Mode section). If decision = spawn → issue `sessions_spawn`, track in `active-agents.json`, await artifact, then skip to step 10. If decision = inline → continue to step 4.
-4. **Pick your agent name** — Read `references/roles/identities/agent-names.md` and select an **unused name** from your role's pool. Sign all your entries with `[Role - Name]` (e.g., `[Developer - Léo]`). If `./bmad/active-agents.json` exists, check which names are already taken for this session.
-5. **Check `references/overrides.json`** — if the file exists, read it. If not, skip to step 7.
+3. **Pick your agent name** — Read `references/roles/identities/agent-names.md` and select an **unused name** from your role's pool. Sign all your entries with `[Role - Name]` (e.g., `[Developer - Léo]`).5. **Check `references/overrides.json`** — if the file exists, read it. If not, skip to step 7.
    - If `role.<name>.prompt` exists for this role: note it (you'll prepend it in step 7)
    - If `role.<name>.ref` exists: note the file path (you'll read it **in addition to** the role file)
 6. **Read the role file** from `references/roles/<name>.md`
@@ -573,10 +449,8 @@ bmad/
 ├── status.yaml                    # Data layer — machine-readable state
 ├── status.md                      # Presentation layer — detailed human-readable report
 ├── config.yaml
-├── active-agents.json        # ACP session tracking (auto-managed)
 ├── bmad-openspace.md         # Inter-role open communication channel
 ├── conventions.md             # Project conventions discovered during development
-├── status-patch.yaml          # Scrum Master ACP output (temporary)
 └── artifacts/
     ├── plan-prd.md
     ├── plan-arch.md

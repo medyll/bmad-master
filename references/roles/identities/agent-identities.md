@@ -2,9 +2,9 @@
 
 ## Inter-Agent Communication: bmad-openspace.md
 
-**Purpose:** When multiple sub-agents (roles) work on the same project, they use `./bmad/bmad-openspace.md` (at project root) to coordinate and avoid collisions.
+**Purpose:** When multiple roles work on the same project, they use `./bmad/bmad-openspace.md` (at project root) to coordinate and avoid collisions.
 
-**Agent Identity:** Each sub-agent picks a **unique name** from its role's name pool (`agent-names.md` in this folder). This ensures clear identification when multiple agents of the same role work concurrently.
+**Agent Identity:** Each role picks a **unique name** from its role's name pool (`agent-names.md` in this folder). This ensures clear identification when multiple roles of the same type work concurrently.
 
 **Format:**
 ```markdown
@@ -40,4 +40,4 @@ E2E tests failing on Modal.svelte — waiting for Developer fix before continuin
 
 See `agent-names.md` in this folder for the name pool system. Each role has 8 unique names (French, English, Spanish). Pick an unused name for your session.
 
-Names in use are tracked in `./bmad/active-agents.json` (created automatically).
+Names in use are tracked in the current session context.
