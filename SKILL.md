@@ -18,7 +18,7 @@ description: |-
 
 
   Triggers: "bmad", "bmad-continue", "bmad-run", "bmad-status", "bmad-init", "bmad-analyze", "bmad-test", "bmad-audit", "bmad-doc",
-  "bmad-whats-next",  "bmad-snapshot", "bmad-connector",
+  "bmad-rationalize", "bmad-whats-next", "bmad-snapshot", "bmad-connector",
   "what's next",
   "develop", "developer", "implement", "code this", "build this",
   "design", "designer", "ui", "ux",
@@ -51,21 +51,6 @@ metadata:
 - **Internal directive**: A BMAD-specific label like `bmad-snapshot` or `bmad-connector`. Still LLM-executed, not a real script — BMAD carries out the steps described here.
 
 ---
-
-## ⚠️ LLM Commands vs CLI Commands — Critical Distinction
-
-**NEVER run BMAD skill commands in a shell.** They are LLM instructions, not executables.
-
-| Type | Examples | How to execute |
-|------|---------|----------------|
-| **LLM skill commands** | `bmad-continue`, `bmad-sprint`, `bmad-plan-prd`, `bmad-status`, `bmad-analyze`, `bmad-init` | Say them as text — the LLM interprets and acts |
-| **CLI commands** | `node engine.mjs analyze`, `node engine.mjs update`, `node engine.mjs next` | Run in shell via Bash tool |
-
-Running `bmad-continue` in a shell will fail with "Unknown command" — this is expected. It is not a bug in the CLI.
-
-The CLI (`engine.mjs`) is a utility script for specific operations (status generation, project scaffolding). It does **not** replace the LLM skill flow.
-
-**Why hyphenated names:** Space-separated names like `bmad continue` look like shell invocations (`<command> <args>`). Hyphenated names like `bmad-continue` are unambiguously skill triggers.
 
 ---
 
@@ -214,46 +199,14 @@ Hard blockers (stop chain):
 - If no unit test exists for the failing e2e path, the E2E failure is **not a blocker** — report it clearly but continue the Chain Protocol
 - If the e2e failure signals an unrecoverable environment issue (missing test runner, infrastructure down, credential errors), treat it as a hard blocker regardless
 
-**🔴 TEST ENFORCEMENT RULE (CRITICAL — Added 2026-04-06):**
+**🔴 TEST ENFORCEMENT RULE (CRITICAL):**
 > **A story CANNOT be marked "complete" without PROOF that tests were ACTUALLY EXECUTED.**
 
-**Symptom that triggered this rule:**
-- Agent develops a story (detailed sprint, code well-written)
-- Claims: "application works, you can test it without any problem"
-- **Reality:** Application does NOT work — tests were NEVER run
-- Code conflicts exist but undetected
-
-**Enforcement:**
-1. **Before closing a story** → `bmad-test` is **MANDATORY**
-2. **Real output required** — NO "assumed", "should work", "you can test", "tests likely pass"
-3. **Tester role sign-off** — Tester must run tests and report actual results before Developer can close
-4. **status.yaml validation** — Add fields:
-   ```yaml
-   stories:
-     - id: S1-01
-       status: complete  # ONLY if tests_executed: true
-       tests_executed: true|false  # REQUIRED
-       test_output: bmad/artifacts/test-report-S1-01.md  # REQUIRED if complete
-   ```
-5. **Hard blocker** — If tests not run → chain CANNOT continue, story CANNOT be marked complete
-6. **Forbidden phrases** (indicate assumption, not execution):
-   - ❌ "tests should pass"
-   - ❌ "you can test it"
-   - ❌ "application works"
-   - ❌ "no issues expected"
-   - ✅ ONLY: "tests executed, output: <path>, result: pass/fail"
-
-**Chain Protocol update:**
-- When a story reaches "development complete" → **AUTOMATICALLY chain to Tester role**
-- Tester runs `bmad-test` → captures real output → writes test report
-- ONLY if tests pass → story marked complete, chain continues
-- If tests fail → fix cycle (Developer → Tester → Developer) until pass
-
-**Why this is non-negotiable:**
-- Prevents false positives (stories marked done but broken)
-- Forces test discipline every single story
-- Catches conflicts and regressions early
-- Makes BMAD reliable for deployment
+1. `bmad-test` is **MANDATORY** before closing any story
+2. **Real output required** — forbidden: "should pass", "you can test it", "works", "no issues expected"
+3. **Tester role sign-off** required — actual results, not assumptions
+4. **Hard blocker** — tests not run → chain stops, story stays open
+5. Dev complete → auto-chain to Tester → test report → if pass: close story, if fail: fix cycle
 
 Action-first rules (no stalling on proposals):
 - When executing a skill command, pick a single, concrete recommended action and execute it immediately. Do not present multiple alternative proposals as a substitute for action.
@@ -331,13 +284,88 @@ When called without argument, `bmad-run` reads `status.yaml` and picks the tight
 
 ---
 
+## bmad-init — Project Initialization
+
+**Project name rule:** Never ask the user for a project name. Infer it from the current directory name (e.g. `singleton-notepad` from `D:\boulot\dev\winui\singleton-notepad\`). If a name was passed as argument, use it. Never stall on this.
+
+### Standard Scaffold
+
+`bmad-init` creates the `bmad/` folder structure in the current directory:
+
+```
+bmad/
+├── status.yaml
+├── status.md
+├── config.yaml
+├── bmad-openspace.md
+├── conventions.md
+└── artifacts/
+    └── history/
+```
+
+### Intake-Sources: Scanning Existing Files
+
+**Before scaffolding**, `bmad-init` scans the current directory for pre-existing files and folders that may express the user's intent for the project.
+
+**What to scan:**
+- Any file or folder directly in the cwd that is NOT: hidden (`.git`, `.env*`), a system file, or already a `bmad/` folder
+- Typical candidates: `SCRATCHPAD.md`, `README.md`, `notes.txt`, `ideas/`, `specs/`, `wireframes/`, `*.md`, `*.txt`, `*.pdf`, loose source folders
+
+**Procedure:**
+
+1. **List** all non-hidden files/folders in cwd
+2. **If any exist** → create `bmad/intake-sources/` and move them there
+3. **Generate `bmad/intake-sources/_index.md`** — list of files + 2-4 sentence intent reading + signals for PM (see template: `references/templates/intake-templates.md`)
+4. **Proceed** with normal bmad/ scaffold (status.yaml, config.yaml, artifacts/)
+5. **PM role** MUST read `bmad/intake-sources/` before writing the PRD
+
+**If cwd is empty:** skip intake scan, proceed directly to scaffold. Do NOT delete or modify intake files.
+
+### Auto-rationalization (light pass at init)
+
+After collecting, BMAD runs a light rationalization: read each file, extract purpose/features/constraints/gaps, write `bmad/intake-sources/INTENT.md` (level: light). Never invent content — gaps are `⚠` warnings, never blockers. Template: `references/templates/intake-templates.md`.
+
+---
+
+## bmad-rationalize — Deep Rationalization
+
+`bmad-rationalize` refines and extends `INTENT.md` into a full functional description. It does NOT ideate — it only reformulates what already exists and surfaces missing structure.
+
+### When to use
+
+- After `bmad-init` when the auto-light pass was too sparse
+- When the user has added more source files to `bmad/intake-sources/`
+- When the PM needs a cleaner input before writing the PRD
+- Can be called alongside `bmad-init` (e.g., `bmad-init` on a dirty folder — BMAD runs both)
+
+### Procedure
+
+1. Read all files in `bmad/intake-sources/` (including existing `INTENT.md`)
+2. **Do NOT add ideas** — only reformulate what is explicitly written
+3. Restructure into clear functional sections: Purpose, Target users, Features, Technical context, Open questions `⚠` (never blocking)
+4. Overwrite `bmad/intake-sources/INTENT.md` (level: full) — template: `references/templates/intake-templates.md`
+5. Update `status.yaml` → `next_role: PM`, `next_action: write PRD`
+
+### Combined with bmad-init
+
+If the user calls `bmad-init` on a folder that already has intent-rich sources, BMAD MAY run `bmad-rationalize` immediately after the light pass — using this heuristic:
+
+| Condition | Action |
+|-----------|--------|
+| Sources are sparse (< 10 lines total) | Light pass only |
+| Sources are rich (structured notes, feature lists, specs) | Auto-chain to `bmad-rationalize` |
+| User explicitly says "rationalize" or "init and rationalize" | Always run full `bmad-rationalize` |
+
+---
+
 ## What You Say (User Interface)
 
 These are the only commands you need. BMAD handles everything else automatically.
 
 | You Say | What happens |
 |---------|-------------|
-| `bmad-init <project>` | Create project structure, ready to start |
+| `bmad-init <project>` | Create project structure + collect existing files into `intake-sources/` + light auto-rationalization |
+| `bmad-rationalize` | Deep reformulation of `intake-sources/` into a clean `INTENT.md` — no ideation, gaps noted as warnings |
 | `bmad-continue` | Keep working: implement stories, write tests, chain to next step automatically |
 | `bmad-run` | **Auto-scoped**: infers from `status.yaml` what to run (story, sprint, or next action) — no argument needed. |
 | `bmad-run story <ID>` | Force a specific story end-to-end: dev → test → close. |
@@ -402,7 +430,7 @@ Follow these steps **in order** every time you execute a skill command:
    - `next_role` = which role executes next (must match next_command)
    - `progress` when work meaningfully advances
    - **Validation:** Ensure `next_command` and `next_role` are in sync (see Validation Rules table above). Inconsistency breaks the chain.
-   - **How to write:** Use the filesystem directly; do NOT use engine.mjs for writes.
+   - **How to write:** Use the Edit tool directly on status.yaml.
 
 ### Roles Autonomy Rule
 
@@ -449,6 +477,9 @@ bmad/
 ├── status.yaml                    # Data layer — machine-readable state
 ├── status.md                      # Presentation layer — detailed human-readable report
 ├── config.yaml
+├── intake-sources/            # Pre-existing files collected at bmad-init (user intent material)
+│   ├── _index.md              # BMAD's reading of collected files + signals for PM
+│   └── <original files>       # Preserved as-is, never modified
 ├── bmad-openspace.md         # Inter-role open communication channel
 ├── conventions.md             # Project conventions discovered during development
 └── artifacts/
@@ -470,61 +501,17 @@ bmad/
 
 ## Execution Honesty Rule
 
-**Never report results you have not actually obtained.**
-
-**Specifically forbidden:**
-- ❌ "tests pass" — if you didn't actually run `bmad-test`
-- ❌ "application works" — if you didn't actually test it
-- ❌ "no conflicts" — if you didn't actually build/merge
-- ❌ "you can test it" — implies YOU haven't tested it
-- ❌ "should work" — assumption, not evidence
-- ❌ "likely no issues" — speculation, not verification
-
-**Required honesty:**
-- ✅ "tests executed via bmad-test, output: `bmad/artifacts/test-report-S1-01.md`, result: 142/142 pass"
-- ✅ "build completed, no errors, artifact: `dist/app.js`"
-- ✅ "merge conflict detected in `file.ts`, resolved by [method]"
-- ✅ "E2E test failed: `test.spec.ts:45` — investigating"
-
-**This rule is non-negotiable.** Violating it breaks the Chain Protocol trust and blocks deployment reliability.
+Never report results not actually obtained. Forbidden: "tests pass", "works", "no conflicts", "should work", "you can test it". Required: actual output path + result (e.g. "tests executed, output: bmad/artifacts/test-report-S1-01.md, result: 142/142 pass"). Violating this breaks Chain Protocol trust.
 
 ---
 
 ## status.yaml — Story Test Fields (REQUIRED)
 
-**Every story in `status.yaml` MUST include test tracking fields:**
+Every story MUST have: `tests_executed: true|false`, `test_output: <path>|null`, `test_result: pass|fail|partial|null`.
 
-```yaml
-sprints:
-  - number: 1
-    goal: "Sprint goal here"
-    status: in_progress
-    stories:
-      - id: S1-01
-        title: "Story title"
-        status: in_progress | complete | blocked
-        tests_executed: true | false    # REQUIRED — false by default
-        test_output: null | "bmad/artifacts/test-report-S1-01.md"  # REQUIRED if complete
-        test_result: null | pass | fail | partial  # REQUIRED if tests_executed: true
-        
-      - id: S1-02
-        title: "Another story"
-        status: complete
-        tests_executed: true
-        test_output: "bmad/artifacts/test-report-S1-02.md"
-        test_result: pass
-```
+`status: complete` requires `tests_executed: true` AND `test_result: pass`. Story without tests = hard blocker.
 
-**Validation rules:**
-- `status: complete` → REQUIRES `tests_executed: true` AND `test_result: pass`
-- `tests_executed: false` → `status` CANNOT be `complete`
-- `test_output` MUST exist if `tests_executed: true`
-- Test report artifact MUST contain actual test runner output (not assumed)
-
-**Enforcement:**
-- BMAD Orchestrator validates these fields before allowing chain to continue
-- Story marked complete without tests = **hard blocker**
-- Tester role MUST sign off (via test report) before Developer can close story
+**Full schema:** see `references/status-yaml-validation.md`.
 
 ---
 
