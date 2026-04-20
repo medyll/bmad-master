@@ -1,19 +1,15 @@
 #!/usr/bin/env node
 /**
- * engine.mjs — Engine for BMAD ( now bmad-method) unified script runner
+ * engine.mjs — Internal script runner for bmad-method skill
  *
  * Usage:
  *   node engine.mjs <command> [args]
  *
- * User Commands (dispatched by SKILL.md roles):
- *   status [dir]           Read and display current project state
- *   next [dir]             Show next recommended action
- *   continue [dir]         (placeholder — SKILL.md invokes role)
- *   test [dir]             (placeholder — SKILL.md invokes tester role)
- *   audit [dir]            (placeholder — SKILL.md invokes reviewer role)
- *   doc [dir]              (placeholder — SKILL.md invokes designer role)
+ * ⚠️ INTERNAL COMMANDS ONLY — Not user-facing
+ * These commands are invoked by the SKILL.md LLM layer, never directly by users.
+ * User-facing commands use the `bmad-*` prefix (e.g. bmad-init, bmad-status).
  *
- * Internal Commands:
+ * Commands:
  *   init [dir]             Create bmad/ project structure with all Chain Protocol fields
  *   update [dir]           Add missing Chain Protocol fields to existing status.yaml
  *   analyze [dir]          Scan project and generate status.yaml
@@ -22,11 +18,6 @@
  *   config <action> [key]  Manage skill configuration (get/set/unset)
  *   install                Install required dependencies (js-yaml)
  *   repair                 Verify environment and fix issues
- *
- * Note: Accepts natural language variations:
- *   - "bmad continue please" → continue
- *   - "what's next s'il vous plaît" → next
- *   - "run tests please" → test
  */
 
 import fs from 'fs/promises';
@@ -152,7 +143,7 @@ class Bmad {
     try {
       await fs.access(path.join(dir, 'status.yaml'));
       this.log('init', `bmad/ already exists at ${dir}`);
-      console.log('Use `bmad analyze` to refresh status from existing code.');
+      console.log('Use `bmad-rebuild` to refresh status from existing code.');
       return;
     } catch {}
 
@@ -932,39 +923,12 @@ sprints: []
 }
 
 // ── Command Parser ──────────────────────────────────────────────────────────
-// Accepts natural language variations and maps to canonical commands
+// Internal commands only — no natural language variations needed
 
 function parseCommand(rawInput) {
-  // Remove file arguments and normalize
-  const input = rawInput
-    .join(' ')
-    .toLowerCase()
-    .replace(/please|s'il te plaît|s'il vous plaît|merci|thanks/gi, '')
-    .trim();
-
-  // Maps for user commands with variations (order matters — check specifics first)
-  const map = {
-    next: /^(?:what's?|whats)\s?next\b|^next(?:\s|$)|^next\s?action/,
-    init: /^init(?:\s|$)/,
-    status: /^status$/,
-    continue: /^continue$|^go\s?(?:on|ahead)|^keep\s?(?:going|working)|^keep\s?on/,
-    test: /^test(?:\s|$)|^run\s?(?:tests?|unit|e2e)/,
-    audit: /^audit$|^(?:check|review|analyze)\s?(?:code|quality)/,
-    doc: /^doc(?:s)?(?:\s|$)|^generate\s?(?:readme|docs?)/,
-    analyze: /^analyze(?:\s|$)|^scan/,
-    snapshot: /^snapshot(?:\s|$)/,
-    connector: /^connector(?:\s|$)/,
-    install: /^install(?:\s|$)/,
-    repair: /^repair(?:\s|$)/,
-    config: /^config(?:\s|$)/,
-  };
-
-  for (const [cmd, pattern] of Object.entries(map)) {
-    if (pattern.test(input)) return cmd;
-  }
-
-  // Fallback: return first token
-  return input.split(/\s+/)[0] || null;
+  const cmd = rawInput[0]?.toLowerCase();
+  if (!cmd) return null;
+  return cmd;
 }
 
 // ── CLI entry point ─────────────────────────────────────────────────────────
