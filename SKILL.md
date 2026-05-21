@@ -131,7 +131,6 @@ Do NOT proceed past this block for `bmad-status`. Do NOT enter the Role Activati
 **Normal flow:** Execute → update yaml → `[DONE: X]` → `[NEXT: Y]` → execute next.
 
 **Decision points** (show menu only here):
-- End of sprint (all stories done)
 - End of milestone
 - 2+ equally valid directions
 
@@ -139,7 +138,9 @@ Do NOT proceed past this block for `bmad-status`. Do NOT enter the Role Activati
 
 **Hard blockers:** Missing file, unrecoverable error, inconsistent `next_command`/`next_role`, user says "stop"/"pause".
 
-**TEST ENFORCEMENT (CRITICAL):** Story complete = tests executed + pass. Forbidden: "should pass", "you can test it". Required: actual output path + result.
+**SPRINT COMPLETION GATE (HARD BLOCKER):** All stories done ≠ sprint done. Sprint is done ONLY when Tester role has run `bmad-test unit` and produced `bmad/artifacts/test-results-sprint-<N>.md` with a passing marker. Dev role MUST chain immediately to Tester — no menu, no decision point, no user prompt. Skipping tester = broken sprint = forbidden.
+
+**TEST ENFORCEMENT (CRITICAL):** Story complete = tests executed + pass. Forbidden: "should pass", "you can test it", "tests should be fine". Required: actual shell output captured to artifact file.
 
 ---
 
