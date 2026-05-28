@@ -76,6 +76,30 @@ sprints: []
 #         test_output: null
 #         test_result: null
 
+# ── Architecture Decision Records ─────────────────────────────────────────────
+# Architect owns this section. Append-only — never delete, only change status.
+# status lifecycle: proposed → accepted → deprecated | superseded
+adrs: []
+# Example — uncomment and fill when first ADR is recorded:
+# adrs:
+#   - id: ADR-01
+#     title: "Short decision title"
+#     status: accepted        # one of: proposed | accepted | deprecated | superseded
+#     decision: "One-line rationale — what was decided and why."
+
+# ── Backlog ────────────────────────────────────────────────────────────────────
+# Scrum Master reads this before sprint planning. Dev writes here on postpone.
+# id format: BL-{nn} (features/debt) | BACK-{nn} (postponed sprint stories)
+# priority lifecycle: high | medium | low → done (resolved) | obsolete (dropped)
+backlog: []
+# Example — uncomment and fill when items accumulate:
+# backlog:
+#   - id: BL-01
+#     title: "Short description"
+#     priority: medium
+#     description: "One-line context — what and why."
+#   - { id: BL-02, priority: done, title: "Implemented in S1-03" }
+
 # ── QA / Bugs (optional) ──────────────────────────────────────────────────────
 # Track known issues
 qa:

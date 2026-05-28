@@ -123,6 +123,24 @@ Show every phase and sprint — what's done, current, and ahead. Full path to sh
   |----------|--------|
   | <name> | ✅ done / ⬚ pending |
 
+### Backlog
+
+<Show only if backlog has active items (priority != done/obsolete). Omit section if empty.>
+
+  | ID | Priority | Title |
+  |----|----------|-------|
+  | BL-01 | high | <title> |
+  | BACK-01 | high | <postponed story title> |
+
+### Architecture Decisions
+
+<Show only if adrs array is non-empty. Omit section if empty.>
+
+  | ID | Status | Decision |
+  |----|--------|----------|
+  | ADR-01 | ✅ accepted | <one-line decision> |
+  | ADR-02 | 🔲 proposed | <one-line decision> |
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   bmad continue   — execute next step
   bmad test       — run tests
@@ -140,9 +158,41 @@ Show every phase and sprint — what's done, current, and ahead. Full path to sh
 - **Roadmap**: reconstruct from status.yaml `phases` array and all sprint files. Show complete path from current state to release.
 - The .md file saved to `./bmad/artifacts/status-report.md` IS the source of truth. The terminal output displays the same content verbatim — no separate rendering.
 
+## Backlog Management (`bmad-backlog`)
+
+Scrum Master owns backlog grooming. Triggered by "bmad-backlog", "show backlog", "groom backlog", or automatically before sprint planning.
+
+**Reading backlog:** Read `status.yaml backlog:` — items with priority `high | medium | low` are active. Items with `done` or `obsolete` are closed and can be ignored.
+
+**Grooming procedure:**
+1. List all active items sorted by priority
+2. Identify items ready to pull into the next sprint (no blocking dependencies)
+3. Identify items that have become obsolete (set `priority: obsolete`)
+4. Surface items that need architect review (add `> Needs ADR:` note)
+5. Update status.yaml with any priority changes — append-only for `done`/`obsolete` transitions
+
+**ID formats:**
+- `BL-{nn}` — feature or tech debt
+- `BACK-{nn}` — story postponed from a sprint (higher urgency signal)
+
+**Sprint planning:** Pull backlog items highest-priority-first. Items moved into a sprint are NOT removed from backlog — set `priority: done` when the sprint story completes.
+
+**Output:** When `bmad-backlog` is called, print a table:
+
+```
+## Backlog
+
+| ID | Priority | Title | Ready? |
+|----|----------|-------|--------|
+| BL-01 | high | Short title | ✅ ready |
+| BACK-01 | high | Postponed story | ⚠️ needs arch review |
+| BL-02 | medium | Feature X | ✅ ready |
+| BL-03 | low | Tech debt cleanup | ✅ ready |
+```
+
 ## Autonomy
 
-Never ask the user what to put in a sprint — that's your role. **Always read existing stories and sprints first** — never lose existing work. If stories already exist, use them. If a sprint already exists, improve it instead of replacing it. Read the backlog, estimate effort, fill the sprint, commit. If effort estimates are uncertain, pick conservative values and note them. The user reviews the output, not the process.
+Never ask the user what to put in a sprint — that's your role. **Always read existing stories and sprints first** — never lose existing work. If stories already exist, use them. If a sprint already exists, improve it instead of replacing it. Read `status.yaml backlog:` (highest priority first), estimate effort, fill the sprint, commit. If effort estimates are uncertain, pick conservative values and note them. The user reviews the output, not the process.
 
 ## Anti-patterns
 

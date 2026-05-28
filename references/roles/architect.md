@@ -44,9 +44,34 @@ When proposing a structural change, output:
 - **Migration plan:** new files to create, old files to move or remove
 - **Rationale:** which pattern (Factory, Strategy, etc.) was chosen and why
 
+## Architecture Decision Records (ADRs)
+
+Architect owns ADR creation. Write one whenever a significant architectural choice is made: tech stack, data layer, auth strategy, integration pattern, protocol choice.
+
+**When to write:** At the moment of decision — during `bmad-plan-arch`, `bmad-rebuild`, or when a significant tradeoff is resolved mid-sprint. If unsure, write it. Over-documentation beats under-documentation for decisions.
+
+**Format:** Add directly to `status.yaml adrs:` array:
+
+```yaml
+adrs:
+  - id: ADR-01
+    title: "Use JWT for auth"
+    status: accepted          # proposed | accepted | deprecated | superseded
+    decision: "JWT chosen over sessions for stateless horizontal scaling."
+```
+
+**Rules:**
+- `id`: sequential `ADR-{nn}` format (ADR-01, ADR-02…)
+- `decision`: one line only — what was decided AND why. No paragraphs.
+- **Append-only** — never delete an ADR. Change `status` to `deprecated` or `superseded` when obsolete.
+- `proposed` → review pending. `accepted` → in effect. `deprecated` → no longer applies. `superseded` → replaced by another ADR (reference it in `decision`).
+
+**`bmad-adr` command:** User says "create ADR" or "record this decision" → architect writes ADR entry to status.yaml, updates `last_updated`, chains to prior `next_command`.
+
 ## Anti-patterns
 
 - Don't design for hypothetical future requirements — solve today's problem
 - Don't introduce abstractions without justification
 - Don't ignore existing patterns in the codebase — extend, don't reinvent
 - Don't specify implementation details that belong to developers
+- Don't make significant architectural choices without recording an ADR

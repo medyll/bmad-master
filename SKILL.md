@@ -1,35 +1,17 @@
 ---
 name: bmad-method
 description: |-
-  Project orchestrator — Your interface between you and the development workflow.
-  Say what you want, bmad-method handles the rest. No management overhead, no technical jargon.
-
-  Main commands (all scoped with explicit prefix — NOT shell commands):
-  - `bmad-init <PROJECT_NAME>` — Start a new project
-  - `bmad-continue` — Keep working (implements stories, runs tests, chains automatically)
-  - `bmad-status` / `bmad-whats-next` — Display cached status.md (no regeneration)
-  - `bmad-rebuild` — Rebuild status.yaml + status.md from project state (explicit regeneration)
-  - `bmad-test` — Run unit and e2e tests
-  - `bmad-audit` — Check code quality
-  - `bmad-doc` — Generate docs/README
-
-  Internal workflow (bmad-method handles automatically): planning → sprints → stories → dev → test
-  Note: publish, tag, and release are handled by CI — bmad-method stops at passing tests.
-
-
-  Triggers: "bmad", "bmad-continue", "bmad-run", "bmad-status", "bmad-init", "bmad-rebuild", "bmad-test", "bmad-audit", "bmad-doc",
-  "bmad-rationalize", "bmad-whats-next", "bmad-snapshot", "bmad-connector",
-  "what's next",
-  "develop", "developer", "implement", "code this", "build this",
-  "design", "designer", "ui", "ux",
-  "architect", "architecture", "system design",
-  "review", "reviewer", "code review",
-  "tester", "qa", "write tests",
-  "plan", "product", "prd", "spec", "requirements",
-  "sprint", "scrum", "backlog", "postpone"
-  Use whenever you have project work to do. Just say it naturally.
-  Roles are also callable standalone — say "develop this" or "design this" without "bmad".
-argument-hint: "bmad-init, bmad-continue, bmad-status, bmad-whats-next, bmad-rebuild, bmad-test, bmad-audit, bmad-doc"
+  [bmad-init <PROJECT_NAME>] (Start a new BMAD project.)
+  [bmad-continue] (Resume the workflow and implement the next story.)
+  [bmad-status|bmad-whats-next] (Show cached status.md without regeneration.)
+  [bmad-rebuild] (Rebuild status.yaml + status.md from project state.)
+  [bmad-test] (Run unit and e2e tests.)
+  [bmad-audit] (Review code quality.)
+  [bmad-doc] (Generate docs and README output.)
+  Project orchestrator for planning, sprints, stories, dev, and test.
+  Triggers on bmad commands, "what's next", and role intents like develop,
+  design, architect, review, test, and plan. Standalone roles also work.
+argument-hint: "bmad-init, bmad-continue, bmad-status, bmad-rebuild, bmad-test, bmad-audit, bmad-doc"
 compatibility:
   - mcp_v2
 user-invocable: true
@@ -85,12 +67,12 @@ metadata:
 
 ###  ⚡ SHORT-CIRCUIT: `bmad-status` and `bmad-whats-next`
 
-`bmad-status` displays the **cached** `status.md` — it never regenerates anything. Both `status.yaml` and `status.md` are kept up to date automatically at the end of every action.
+`bmad-status` renders `status.yaml` on demand — there is no cached presentation file.
 
 If the command is **`bmad-status`** or **`bmad-whats-next`**:
 
-1. **Read** `./bmad/status.md` (mandatory — this is the detailed report)
-2. **Display** its contents verbatim to the user
+1. **Run** `node scripts/engine.mjs render` via shell
+2. **Display** its output verbatim to the user
 3. **STOP** — no role activation, no chain, no regeneration
 
 **To rebuild status from scratch**, the user must explicitly say `bmad-rebuild` (which invokes `node scripts/engine.mjs analyze`). That is a different command with a different purpose.
@@ -101,12 +83,11 @@ Do NOT proceed past this block for `bmad-status`. Do NOT enter the Role Activati
 
 ### Status Generation (end of every action)
 
-**Every command** (except `bmad-status`) MUST update both files at end:
+**Every command** (except `bmad-status`) MUST update at end:
 1. **Update `./bmad/status.yaml`** via Edit tool — all fields including 3 dimensions (`marketing`, `product`, `far_vision`, max 4 lines each).
-2. **Generate `./bmad/status.md`** — human-readable report from yaml.
-3. **Verify** — re-read yaml to confirm write succeeded.
+2. **Verify** — re-read yaml to confirm write succeeded.
 
-`.md` = presentation, `.yaml` = data layer. Always in sync.
+`status.yaml` = single source of truth. No presentation file to maintain — `bmad-status` renders on demand via `engine render`.
 
 ---
 
@@ -170,8 +151,7 @@ Hands-off variant of `bmad-continue`. Accepts a **scope** and executes without s
 
 ```
 bmad/
-├── status.yaml       # Single source of truth (data layer)
-├── status.md         # Human-readable report (presentation layer)
+├── status.yaml       # Single source of truth — render with: node scripts/engine.mjs render
 ├── config.yaml       # Project settings
 ├── bmad-openspace.md # Inter-role communication
 ├── conventions.md    # Discovered project conventions
@@ -232,7 +212,8 @@ Refines `INTENT.md` — reformulates existing content only, no ideation.
 | Command | What it does | Invoked by |
 |---------|--------------|------------|
 | `init` | Create `bmad/` structure | `bmad-init` |
-| `analyze` | Scan project, generate status.yaml | `bmad-rebuild` |
+| `analyze` | Scan project, generate status.yaml (preserves adrs + backlog) | `bmad-rebuild` |
+| `render` | Render status.yaml as markdown to stdout (no file written) | `bmad-status`, `bmad-whats-next` |
 | `update` | Add missing Chain Protocol fields | Auto |
 | `snapshot` | Save status.yaml to `artifacts/history/` | `bmad-snapshot` |
 | `connector` | Generate `artifacts/connector.yml` | `bmad-connector` |
@@ -246,15 +227,15 @@ Refines `INTENT.md` — reformulates existing content only, no ideation.
 
 Each skill command has a corresponding **role** — a contextual lens that shapes how the model approaches the task. Role files are in `references/roles/` and must be read before executing skill commands.
 
-| Role | File | Commands |
-|------|------|----------|
-| **PM** | `references/roles/pm.md` | `bmad-plan-prd`, `bmad-plan-spec` |
-| **Architect** | `references/roles/architect.md` | `bmad-plan-arch`, `bmad-rebuild` |
-| **Developer** | `references/roles/dev.md` | `bmad-dev-story`, `bmad-fix`, `bmad-continue` |
-| **Reviewer** | `references/roles/reviewer.md` | `bmad-dev-review`, `bmad-audit` |
-| **Tester** | `references/roles/tester.md` | `bmad-test-unit`, `bmad-test-e2e` |
-| **Scrum Master** | `references/roles/scrum.md` | `bmad-sprint`, `bmad-sprint-story`, `bmad-next`, `bmad-status` |
-| **Designer** | `references/roles/designer.md` | `bmad-doc` (UI docs), component design, CSS/HTML tasks |
+| Role | File | Commands | Ownership |
+|------|------|----------|-----------|
+| **PM** | `references/roles/pm.md` | `bmad-plan-prd`, `bmad-plan-spec` | — |
+| **Architect** | `references/roles/architect.md` | `bmad-plan-arch`, `bmad-rebuild`, `bmad-adr` | **Writes ADRs** to `status.yaml adrs:` |
+| **Developer** | `references/roles/dev.md` | `bmad-dev-story`, `bmad-fix`, `bmad-continue`, `bmad-postpone` | Postpones blocked stories to backlog |
+| **Reviewer** | `references/roles/reviewer.md` | `bmad-dev-review`, `bmad-audit` | — |
+| **Tester** | `references/roles/tester.md` | `bmad-test-unit`, `bmad-test-e2e` | — |
+| **Scrum Master** | `references/roles/scrum.md` | `bmad-sprint`, `bmad-sprint-story`, `bmad-next`, `bmad-status`, `bmad-backlog` | **Reads + grooms backlog**; promotes to sprint |
+| **Designer** | `references/roles/designer.md` | `bmad-doc` (UI docs), component design, CSS/HTML tasks | — |
 
 `readme` has no role — use project context directly.
 

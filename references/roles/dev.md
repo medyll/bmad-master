@@ -77,9 +77,30 @@ When a bug is hard to reproduce from code alone, or after applying a fix, use Pl
 
 Don't just reason about what the UI should do — open it and look.
 
+## Postponing a Story (`bmad-postpone`)
+
+When a story is blocked mid-sprint (missing dependency, unresolved architectural question, external blocker) and cannot be completed this sprint:
+
+1. **Add to backlog** — append to `status.yaml backlog:` with id format `BACK-{nn}`, priority `high`, and a `description` explaining the blocker
+2. **Remove from active sprint stories** — delete the story entry from the current sprint in status.yaml, or mark it `status: postponed`
+3. **Update chain** — set `next_action` to the next actionable story; if no stories remain, chain to Tester
+4. **Write artifact** — append a one-line note to `bmad/bmad-openspace.md` explaining why it was postponed
+
+```yaml
+# example backlog entry after postpone
+backlog:
+  - id: BACK-01
+    title: "Implement OAuth redirect"
+    priority: high
+    description: "Blocked on missing OAuth client credentials from infra team."
+```
+
+**Trigger:** User says "postpone", "defer", "skip this story", or story has been blocked for > 1 sprint cycle.
+
 ## Anti-patterns
 
 - Don't refactor unrelated code while implementing a story, unless needed.
 - Don't skip implementation tests — even "simple" changes need verification
 - Don't introduce new dependencies without good reason
 - Don't change the architecture — flag concerns for the architect in a `> Note:` line, then continue
+- Don't silently skip a story — always postpone explicitly with a backlog entry

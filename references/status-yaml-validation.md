@@ -46,6 +46,19 @@ artifacts:                       # (optional) keys are artifact names, values ar
   architecture: done
   tech-spec: in_progress
 
+adrs:                            # (optional) Architecture Decision Records
+  - id: ADR-01                   # string — sequential identifier
+    title: "Use JWT for auth"    # string — short decision title
+    status: accepted             # one of: proposed | accepted | deprecated | superseded
+    decision: "JWT chosen over sessions for stateless horizontal scaling."  # one-line rationale
+
+backlog:                         # (optional) stories not yet assigned to a sprint
+  - id: BL-01                    # string — format BL-{nn} for backlog, BACK-{nn} for bugs/blockers
+    title: "Short description"   # string
+    priority: medium             # one of: high | medium | low | done | obsolete
+    description: "One-line context — what and why."  # optional, omit for done/obsolete items
+  - { id: BL-02, priority: done, title: "Implemented in S12" }  # closed items as 1-liners
+
 sprints:                         # (optional) array of sprint objects
   - id: 1                        # integer — sprint number, starts at 1
     status: active               # one of: active | completed | planned
@@ -124,6 +137,22 @@ far_vision:
 1. No YAML syntax errors (mismatched quotes, bad indentation)
 2. All required fields present
 3. `next_command` / `next_role` in sync
+
+**Backlog rules:**
+- `id`: format `BL-{nn}` (features/tech debt) or `BACK-{nn}` (blockers/bugs deferred from sprint)
+- `priority` lifecycle: `high | medium | low` → `done` or `obsolete`
+- `description`: one line for active items. Omit entirely for `done`/`obsolete` — use inline 1-liner instead: `{ id: BL-01, priority: done, title: "..." }`
+- Scrum Master reads backlog before planning a sprint — highest priority items fill the sprint first.
+- Items moved into a sprint are NOT removed from backlog — set `priority: done` when resolved.
+
+---
+
+**ADR rules:**
+- `id`: format `ADR-{nn}` (e.g., `ADR-01`, `ADR-02`)
+- `status` lifecycle: `proposed` → `accepted` → `deprecated` / `superseded`
+- `decision`: one line only — what was decided and why. No paragraphs.
+- Add an ADR whenever a significant architectural choice is made (tech stack, data layer, pattern, integration).
+- ADRs are **append-only** — never delete, only change `status` to `deprecated` or `superseded`.
 
 ---
 
